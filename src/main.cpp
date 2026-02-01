@@ -1,4 +1,3 @@
-#include "game.h"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -30,7 +29,7 @@ int select_y = -1;
 
 GLFWwindow* window;
 
-inline uint64_t board_square(int x, int y) {
+inline uint64_t visual_square(int x, int y) {
     if (viewFromWhite) {
         return x + y * 8;
     } else {
@@ -47,7 +46,8 @@ inline int by_to_vy(int by) { return viewFromWhite ? by : (7 - by); }
 void drawPiece(int x, int y, int size, int piece)
 {
 	glBegin(GL_POLYGON);
-	glColor3f(0.85, 0.85, 0.85);
+	glColor3f(1, 1, 1); //light pieces
+
 
 
 	size = abs(size);
@@ -180,9 +180,9 @@ void draw() {
     for (int x = 0; x < 8; ++x) {
         for (int y = 0; y < 8; ++y) {
             if ((x + y) % 2 == 0) {
-                glColor3f(0.94, 0.95, 0.94);
+                glColor3f(0.7, 0.65, 0.55); //light squares
             } else {
-                glColor3f(0.51, 0.47, 0.71);
+                glColor3f(0.51, 0.47, 0.71); //dark squares
             }
 
             glVertex2f(square_x + square_size * x, square_y + square_size * y);
@@ -199,17 +199,23 @@ void draw() {
         glColor3f(0, 1, 0);
         glBegin(GL_QUADS);
 
-        glVertex2f(square_x + square_size * select_x, square_y + square_size * select_y);
-        glVertex2f(square_x + square_size * (select_x + 1), square_y + square_size * select_y);
-        glVertex2f(square_x + square_size * (select_x + 1), square_y + square_size * (select_y + 1));
-        glVertex2f(square_x + square_size * select_x, square_y + square_size * (select_y + 1));
+        int highlight_x = vx_to_bx(select_x);
+        int highlight_y = vy_to_by(select_y);
+
+        glVertex2f(square_x + square_size * highlight_x, square_y + square_size * highlight_y);
+        glVertex2f(square_x + square_size * (highlight_x + 1), square_y + square_size * highlight_y);
+        glVertex2f(square_x + square_size * (highlight_x + 1), square_y + square_size * (highlight_y + 1));
+        glVertex2f(square_x + square_size * highlight_x, square_y + square_size * (highlight_y + 1));
         glEnd();
     }
 
     //draw chess pieces
+    glDisable(GL_LIGHTING);
+    glDisable(GL_TEXTURE_2D);
+
     for (int x = 0; x < 8; ++x) {
         for (int y = 0; y < 8; ++y) {
-            uint8_t square = board_square(x, y);
+            uint8_t square = visual_square(x, y);
             drawPiece(square_x + square_size * (0.5 + x), square_y + square_size * (0.5 + y), square_size, game.getPiece(square));
         }
     }
@@ -231,28 +237,20 @@ void mouseclick(double x, double y) {
         select_y = -1;
         return;
     }
-        
-    select_x = click_x;
-    select_y = click_y;
 
 
-/*
 
     if (select_x < 8 && select_x >= 0 && select_y < 8 && select_y >= 0 && game.getPiece(select_x + 8 * select_y) != EMPTY) {
-        if (click_x >= 0 && click_x < 8 && click_y >= 0 && click_y < 8) {
-            game.setPiece(game.getPiece(select_x + 8 * select_y), click_x + 8 * click_y);
-            game.setPiece(EMPTY, select_x + 8 * select_y);
-
-        }
-
-        //select_x = -1;
-        //select_y = -1;
+        
+        game.move(select_x + 8 * select_y, click_x + 8 * click_y); //move prev selected piece to currently selected square
+        select_x = -1;
+        select_y = -1;
     } else {
         select_x = click_x;
         select_y = click_y;
     }
     
-*/
+
 
 
 }

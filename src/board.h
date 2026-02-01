@@ -20,23 +20,26 @@
 #define WHITE 13
 #define BLACK 14
 
+using std::uint8_t;
+using std::uint64_t;
+
 struct BoardState {
     //Bitboards for each piece type
-    std::uint64_t bitboards[12];
+    uint64_t bitboards[12];
 
     //castling rights
     bool WKC, BKC, WQC, BQC;
 
     //bitboard that represents en-passant target
-    std::uint64_t passantTarget;
+    uint64_t passantTarget;
 
     //whose turn it is
-    std::uint8_t turn;
+    uint8_t turn;
 };
 
 class ChessBoard {
     //Bitboards for each piece type
-    std::uint64_t bitboards[12];
+    uint64_t bitboards[12];
 
     private:
         BoardState* stateStack;
@@ -44,8 +47,9 @@ class ChessBoard {
 
     public:
         //setters and getters on a specific square
-        std::uint8_t getPiece(std::uint8_t square);
-        void setPiece(std::uint8_t piece, std::uint8_t square);
+        uint8_t getPiece(std::uint8_t square);
+        void setPiece(uint8_t piece, uint8_t square);
+        void move(uint64_t pieceSquare, uint64_t moveSquare);
 
     //constructor
     ChessBoard();

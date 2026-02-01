@@ -1,3 +1,4 @@
+//0-7: A1-A8, 8-15: B1-B8, etc.
 #include "board.h"
 
 using std::uint8_t;
@@ -13,7 +14,7 @@ uint8_t ChessBoard::getPiece(uint8_t square) {
     return EMPTY;
 }
 
-void ChessBoard::setPiece(std::uint8_t piece, std::uint8_t square) {
+void ChessBoard::setPiece(uint8_t piece, uint8_t square) {
     uint64_t mask = uint64_t(1) << square;
     for (int i = 0; i < 12; ++i) {
         bitboards[i] &= ~mask;
@@ -21,7 +22,15 @@ void ChessBoard::setPiece(std::uint8_t piece, std::uint8_t square) {
     bitboards[piece] |= mask;
 }
 
+void ChessBoard::move(uint64_t pieceSquare, uint64_t moveSquare) { //movement; later need to add captures, legal moves
+    if (getPiece(moveSquare) == EMPTY) {
+        setPiece(getPiece(pieceSquare), moveSquare);
+        setPiece(EMPTY, pieceSquare);
+    }
+}
+
 ChessBoard::ChessBoard() {
+    //white pieces
     bitboards[WHITE_PAWN]   = 0x00ff000000000000;
 	bitboards[WHITE_KNIGHT] = 0x4200000000000000;
 	bitboards[WHITE_BISHOP] = 0x2400000000000000;
@@ -29,6 +38,7 @@ ChessBoard::ChessBoard() {
 	bitboards[WHITE_QUEEN]  = 0x0800000000000000;
 	bitboards[WHITE_KING]   = 0x1000000000000000;
 
+    //black pieces
 	bitboards[BLACK_PAWN]   = 0x000000000000ff00;
 	bitboards[BLACK_KNIGHT] = 0x0000000000000042;
 	bitboards[BLACK_BISHOP] = 0x0000000000000024;
