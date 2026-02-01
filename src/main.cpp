@@ -2,6 +2,13 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include "board.h"
+
+using std::uint8_t;
+using std::uint64_t;
+
+//Game state
+ChessBoard game;
 
 int width = 640;
 int height = 480;
@@ -15,13 +22,147 @@ double square_size = board_size * 0.9 * 0.125;
 double square_x = board_x + board_size * 0.05;
 double square_y = board_y + board_size * 0.05;
 
-int white = 0; //0 if white, 1 if black
+bool viewFromWhite = true;
 
 //tracks the board coords of square selected
 int select_x = -1;
 int select_y = -1;
 
 GLFWwindow* window;
+
+inline uint64_t board_square(int x, int y) {
+    if (viewFromWhite) {
+        return x + y * 8;
+    } else {
+        return (7 - x) + (7 - y) * 8;
+    }
+}
+
+inline int vx_to_bx(int vx) { return viewFromWhite ? vx : (7 - vx); }
+inline int vy_to_by(int vy) { return viewFromWhite ? vy : (7 - vy); }
+
+inline int bx_to_vx(int bx) { return viewFromWhite ? bx : (7 - bx); }
+inline int by_to_vy(int by) { return viewFromWhite ? by : (7 - by); }
+
+void drawPiece(int x, int y, int size, int piece)
+{
+	glBegin(GL_POLYGON);
+	glColor3f(0.85, 0.85, 0.85);
+
+
+	size = abs(size);
+
+	switch (piece)
+	{
+	case BLACK_PAWN:
+		glColor3f(0, 0, 0);
+	case WHITE_PAWN:
+		glVertex2i(x - size / 16, y);
+		glVertex2i(x - size / 6, y + size / 3);
+		glVertex2i(x + size / 6, y + size / 3);
+		glVertex2i(x + size / 16, y);
+		glVertex2i(x + size / 8, y - size / 16);
+		glVertex2i(x + size / 8, y - size / 6);
+		glVertex2i(x + size / 16, y - size / 4);
+		glVertex2i(x - size / 16, y - size / 4);
+		glVertex2i(x - size / 8, y - size / 6);
+		glVertex2i(x - size / 8, y - size / 16);
+		break;
+	case BLACK_KNIGHT:
+		glColor3f(0, 0, 0);
+	case WHITE_KNIGHT:
+		glVertex2i(x + size / 8, y);
+		glVertex2i(x + size / 8, y + size / 3);
+		glVertex2i(x - size / 4, y + size / 3);
+		glVertex2i(x - size / 8, y - size / 3);
+		glVertex2i(x - size / 16, y - size / 4);
+		glVertex2i(x + size / 12, y - size / 4);
+		glVertex2i(x + size / 3, y - size / 5);
+		glVertex2i(x + size / 3, y);
+		break;
+	case BLACK_BISHOP:
+		glColor3f(0, 0, 0);
+	case WHITE_BISHOP:
+		glVertex2i(x - size / 6, y + size / 3);
+		glVertex2i(x - size / 8, y + size / 3.5);
+		glVertex2i(x - size / 5, y + size / 6);
+		glVertex2i(x - size / 5, y);
+		glVertex2i(x - size / 32, y - size / 3);
+		glVertex2i(x - size / 24, y - size / 3);
+		glVertex2i(x - size / 24, y - size / 2.7);
+		glVertex2i(x + size / 24, y - size / 2.7);
+		glVertex2i(x + size / 24, y - size / 3);
+		glVertex2i(x + size / 32, y - size / 3);
+		glVertex2i(x + size / 5, y - size / 32);
+		glVertex2i(x - size / 8, y + size / 4);
+		glVertex2i(x + size / 5, y + size / 16);
+		glVertex2i(x + size / 5, y + size / 6);
+		glVertex2i(x + size / 8, y + size / 3.5);
+		glVertex2i(x + size / 6, y + size / 3);
+		break;
+	case BLACK_ROOK:
+		glColor3f(0, 0, 0);
+	case WHITE_ROOK:
+		glVertex2i(x, y + size / 3);
+		glVertex2i(x - size / 4, y + size / 3);
+		glVertex2i(x - size / 4, y + size / 4);
+		glVertex2i(x - size / 6, y + size / 4);
+		glVertex2i(x - size / 6, y);
+		glVertex2i(x - size / 5, y);
+		glVertex2i(x - size / 5, y - size / 5);
+		glVertex2i(x - size / 8, y - size / 5);
+		glVertex2i(x - size / 8, y - size / 10);
+		glVertex2i(x - size / 24, y - size / 10);
+		glVertex2i(x - size / 24, y - size / 5);
+		glVertex2i(x + size / 24, y - size / 5);
+		glVertex2i(x + size / 24, y - size / 10);
+		glVertex2i(x + size / 8, y - size / 10);
+		glVertex2i(x + size / 8, y - size / 5);
+		glVertex2i(x + size / 5, y - size / 5);
+		glVertex2i(x + size / 5, y);
+		glVertex2i(x + size / 6, y);
+		glVertex2i(x + size / 6, y + size / 4);
+		glVertex2i(x + size / 4, y + size / 4);
+		glVertex2i(x + size / 4, y + size / 3);
+		break;
+	case BLACK_KING:
+		glColor3f(0, 0, 0);
+	case WHITE_KING:
+		glEnd();
+		glBegin(GL_QUADS);
+		glVertex2i(x - size / 16, y - size / 2.5);
+		glVertex2i(x + size / 16, y - size / 2.5);
+		glVertex2i(x + size / 16, y);
+		glVertex2i(x - size / 16, y);
+		glVertex2i(x - size / 8, y - size / 3.5);
+		glVertex2i(x + size / 8, y - size / 3.5);
+		glVertex2i(x + size / 8, y - size / 3);
+		glVertex2i(x - size / 8, y - size / 3);
+		glEnd();
+		glBegin(GL_POLYGON);
+		goto continue_draw;
+	case BLACK_QUEEN:
+		glColor3f(0, 0, 0);
+	case WHITE_QUEEN:
+	continue_draw:
+		glVertex2i(x - size / 4, y + size / 3);
+		glVertex2i(x - size / 3, y - size / 6);
+		glVertex2i(x - size / 5, y - size / 7);
+		glVertex2i(x - size / 16, y - size / 5);
+		glVertex2i(x - size / 16, y - size / 3.5);
+		glVertex2i(x + size / 16, y - size / 3.5);
+		glVertex2i(x + size / 15, y - size / 5);
+		glVertex2i(x + size / 5, y - size / 7);
+		glVertex2i(x + size / 3, y - size / 6);
+		glVertex2i(x + size / 4, y + size / 3);
+		break;
+	default:
+		break;
+	}
+
+	glEnd();
+}
+
 
 //fn to update screen
 void draw() {
@@ -65,18 +206,62 @@ void draw() {
         glEnd();
     }
 
+    //draw chess pieces
+    for (int x = 0; x < 8; ++x) {
+        for (int y = 0; y < 8; ++y) {
+            uint8_t square = board_square(x, y);
+            drawPiece(square_x + square_size * (0.5 + x), square_y + square_size * (0.5 + y), square_size, game.getPiece(square));
+        }
+    }
+
     glfwSwapBuffers(window);
 }
 
+
 void mouseclick(double x, double y) {
     //std::cout << "clicked on (" << x << ", " << y << ")" << std::endl;
-    select_x = floor((x - square_x) / square_size);
-    select_y = floor((y - square_y) / square_size);
+
+    int click_x = vx_to_bx(floor((x - square_x) / square_size));
+    int click_y = vy_to_by(floor((y - square_y) / square_size));
+
+    if (click_x < 0 || click_x >= 8 || click_y < 0 || click_y >= 8) return; //click is not on the board
+
+    if (click_x == select_x && click_y == select_y) {
+        select_x = -1;
+        select_y = -1;
+        return;
+    }
+        
+    select_x = click_x;
+    select_y = click_y;
+
+
+/*
+
+    if (select_x < 8 && select_x >= 0 && select_y < 8 && select_y >= 0 && game.getPiece(select_x + 8 * select_y) != EMPTY) {
+        if (click_x >= 0 && click_x < 8 && click_y >= 0 && click_y < 8) {
+            game.setPiece(game.getPiece(select_x + 8 * select_y), click_x + 8 * click_y);
+            game.setPiece(EMPTY, select_x + 8 * select_y);
+
+        }
+
+        //select_x = -1;
+        //select_y = -1;
+    } else {
+        select_x = click_x;
+        select_y = click_y;
+    }
+    
+*/
+
+
 }
 
 void keydown(int key) {
     if (key == GLFW_KEY_ESCAPE) {
         glfwSetWindowShouldClose(window, true);
+    } else if (key == GLFW_KEY_X) {
+        viewFromWhite = !viewFromWhite;
     }
 }
 
