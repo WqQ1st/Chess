@@ -1,5 +1,7 @@
+#define GL_SILENCE_DEPRECATION
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+
 #include <iostream>
 #include "board.h"
 
@@ -21,27 +23,19 @@ double square_size = board_size * 0.9 * 0.125;
 double square_x = board_x + board_size * 0.05;
 double square_y = board_y + board_size * 0.05;
 
-bool viewFromWhite = true;
-
 //tracks the board coords of square selected
 int select_x = -1;
 int select_y = -1;
 
+//global vars that keep track of promotions
+int promote_x = -1;
+int promote_y = -1;
+
+//stack of previous moves
+Move moveStack[1000];
+int moveIndex = 0;
+
 GLFWwindow* window;
-
-inline uint64_t visual_square(int x, int y) {
-    if (viewFromWhite) {
-        return x + y * 8;
-    } else {
-        return (7 - x) + (7 - y) * 8;
-    }
-}
-
-inline int vx_to_bx(int vx) { return viewFromWhite ? vx : (7 - vx); }
-inline int vy_to_by(int vy) { return viewFromWhite ? vy : (7 - vy); }
-
-inline int bx_to_vx(int bx) { return viewFromWhite ? bx : (7 - bx); }
-inline int by_to_vy(int by) { return viewFromWhite ? by : (7 - by); }
 
 void drawPiece(int x, int y, int size, int piece)
 {
@@ -163,6 +157,13 @@ void drawPiece(int x, int y, int size, int piece)
 	glEnd();
 }
 
+void flipBoard() {
+    square_x += 8 * square_size;
+    square_y += 8 * square_size;
+    square_size *= -1;
+}
+
+
 
 //fn to update screen
 void draw() {
@@ -199,15 +200,30 @@ void draw() {
         glColor3f(0, 1, 0);
         glBegin(GL_QUADS);
 
-        int highlight_x = vx_to_bx(select_x);
-        int highlight_y = vy_to_by(select_y);
+        int highlight_x = select_x;
+        int highlight_y = select_y;
 
         glVertex2f(square_x + square_size * highlight_x, square_y + square_size * highlight_y);
         glVertex2f(square_x + square_size * (highlight_x + 1), square_y + square_size * highlight_y);
         glVertex2f(square_x + square_size * (highlight_x + 1), square_y + square_size * (highlight_y + 1));
         glVertex2f(square_x + square_size * highlight_x, square_y + square_size * (highlight_y + 1));
+        
         glEnd();
     }
+
+    //show prev move
+    if (moveIndex > 0) {
+    int from = moveStack[moveIndex - 1].from;
+    int to   = moveStack[moveIndex - 1].to;
+
+    glLineWidth(std::abs(square_size) * 0.15);
+    glColor3f(0, 1, 0);
+    glBegin(GL_LINES);
+    glVertex2f(square_x + square_size * (from % 8 + 0.5), square_y + square_size * (from / 8 + 0.5));
+    glVertex2f(square_x + square_size * (to % 8 + 0.5), square_y + square_size * (to / 8 + 0.5));
+    glEnd();
+}
+    
 
     //draw chess pieces
     glDisable(GL_LIGHTING);
@@ -215,9 +231,57 @@ void draw() {
 
     for (int x = 0; x < 8; ++x) {
         for (int y = 0; y < 8; ++y) {
-            uint8_t square = visual_square(x, y);
+            uint8_t square = x + y * 8;;
             drawPiece(square_x + square_size * (0.5 + x), square_y + square_size * (0.5 + y), square_size, game.getPiece(square));
         }
+    }
+
+
+
+    //draw promotion UI elements
+    if (promote_y == 0) {
+        glBegin(GL_QUADS);
+
+        glColor3f(1, 1, 1);
+        glVertex2f(square_x + square_size * (promote_x - 0.1), square_y - square_size * 0.1);
+        glVertex2f(square_x + square_size * (promote_x + 1.1), square_y - square_size * 0.1);
+        glVertex2f(square_x + square_size * (promote_x + 1.1), square_y + square_size * 4.1);
+        glVertex2f(square_x + square_size * (promote_x - 0.1), square_y + square_size * 4.1);
+
+        glColor3f(0, 0, 0);
+        glVertex2f(square_x + square_size * promote_x, square_y);
+        glVertex2f(square_x + square_size * (promote_x + 1), square_y);
+        glVertex2f(square_x + square_size * (promote_x + 1), square_y + square_size * 4);
+        glVertex2f(square_x + square_size * promote_x, square_y + square_size * 4);
+
+        glEnd();
+
+        drawPiece(square_x + square_size * (0.5 + promote_x), square_y + square_size * 0.5, square_size, WHITE_QUEEN);
+		drawPiece(square_x + square_size * (0.5 + promote_x), square_y + square_size * 1.5, square_size, WHITE_ROOK);
+		drawPiece(square_x + square_size * (0.5 + promote_x), square_y + square_size * 2.5, square_size, WHITE_BISHOP);
+		drawPiece(square_x + square_size * (0.5 + promote_x), square_y + square_size * 3.5, square_size, WHITE_KNIGHT);
+    } else if (promote_y == 7) {
+        glBegin(GL_QUADS);
+
+		glColor3f(0, 0, 0);
+		glVertex2f(square_x + square_size * (promote_x - 0.1), square_y + square_size * 8.1);
+		glVertex2f(square_x + square_size * (promote_x + 1.1), square_y + square_size * 8.1);
+		glVertex2f(square_x + square_size * (promote_x + 1.1), square_y + square_size * 3.9);
+		glVertex2f(square_x + square_size * (promote_x - 0.1), square_y + square_size * 3.9);
+
+
+		glColor3f(1, 1, 1);
+		glVertex2f(square_x + square_size * promote_x, square_y + square_size * 8);
+		glVertex2f(square_x + square_size * (promote_x + 1), square_y + square_size * 8);
+		glVertex2f(square_x + square_size * (promote_x + 1), square_y + square_size * 4);
+		glVertex2f(square_x + square_size * promote_x, square_y + square_size * 4);
+
+		glEnd();
+
+		drawPiece(square_x + square_size * (0.5 + promote_x), square_y + square_size * 7.5, square_size, BLACK_QUEEN);
+		drawPiece(square_x + square_size * (0.5 + promote_x), square_y + square_size * 6.5, square_size, BLACK_ROOK);
+		drawPiece(square_x + square_size * (0.5 + promote_x), square_y + square_size * 5.5, square_size, BLACK_BISHOP);
+		drawPiece(square_x + square_size * (0.5 + promote_x), square_y + square_size * 4.5, square_size, BLACK_KNIGHT);
     }
 
     glfwSwapBuffers(window);
@@ -227,22 +291,80 @@ void draw() {
 void mouseclick(double x, double y) {
     //std::cout << "clicked on (" << x << ", " << y << ")" << std::endl;
 
-    int click_x = vx_to_bx(floor((x - square_x) / square_size));
-    int click_y = vy_to_by(floor((y - square_y) / square_size));
+    int click_x = floor((x - square_x) / square_size);
+    int click_y = floor((y - square_y) / square_size);
 
-    if (click_x < 0 || click_x >= 8 || click_y < 0 || click_y >= 8) return; //click is not on the board
+    if (promote_y == 0) {
+        if (click_x == promote_x) {
+            uint8_t promotion = EMPTY;
+            if (click_y == 0) {
+                promotion = WHITE_QUEEN;
+            } else if (click_y == 1) {
+                promotion = WHITE_ROOK;
+            } else if (click_y == 2) {
+                promotion = WHITE_BISHOP;
+            } else if (click_y == 3) {
+                promotion = WHITE_KNIGHT;
+            }
+            if (promotion != EMPTY) {
+                moveStack[moveIndex - 1].promotion = promotion;
+                game.undo();
+                game.move(moveStack[moveIndex - 1]);
 
-    if (click_x == select_x && click_y == select_y) {
-        select_x = -1;
-        select_y = -1;
-        return;
+                promote_x = -1;
+                promote_y = -1;
+            }
+        }
+    } else if (promote_y == 7) {
+        if (click_x == promote_x) {
+            uint8_t promotion = EMPTY;
+            if (click_y == 7) {
+                promotion = BLACK_QUEEN;
+            } else if (click_y == 6) {
+                promotion = BLACK_ROOK;
+            } else if (click_y == 5) {
+                promotion = BLACK_BISHOP;
+            } else if (click_y == 4) {
+                promotion = BLACK_KNIGHT;
+            }
+            if (promotion != EMPTY) {
+                moveStack[moveIndex - 1].promotion = promotion;
+                game.undo();
+                game.move(moveStack[moveIndex - 1]);
+
+                promote_x = -1;
+                promote_y = -1;
+            }
+        }
     }
+    //otherwise, if piece is selected, move it (if possible)
+    else if (select_x < 8 && select_x >= 0 && select_y < 8 && select_y >= 0 && game.getPiece(select_x + 8 * select_y) != EMPTY) {
+        if (click_x < 0 || click_x >= 8 || click_y < 0 || click_y >= 8) {
+            return; //click is not on the board'
+        }
+        if (click_x == select_x && click_y == select_y) { //clicked on the same square
+            select_x = -1;
+            select_y = -1;
+            return;
+        }
 
+        uint8_t from = select_x + 8 * select_y;
+        uint8_t to = click_x + 8 * click_y;
+        moveStack[moveIndex].from = from;
+        moveStack[moveIndex].to = to;
+        moveStack[moveIndex].promotion = EMPTY;
 
+        game.move(moveStack[moveIndex++]);
 
-    if (select_x < 8 && select_x >= 0 && select_y < 8 && select_y >= 0 && game.getPiece(select_x + 8 * select_y) != EMPTY) {
-        
-        game.move(select_x + 8 * select_y, click_x + 8 * click_y); //move prev selected piece to currently selected square
+        //check to see if pawn promoted
+        if (click_y == 7 && game.getPiece(to) == BLACK_PAWN || click_y == 0 && game.getPiece(to) == WHITE_PAWN) {
+            promote_x = click_x;
+            promote_y = click_y;
+        } else {
+            promote_x = -1;
+            promote_y = -1;
+        }
+
         select_x = -1;
         select_y = -1;
     } else {
@@ -259,11 +381,16 @@ void keydown(int key) {
     if (key == GLFW_KEY_ESCAPE) {
         glfwSetWindowShouldClose(window, true);
     } else if (key == GLFW_KEY_X) {
-        viewFromWhite = !viewFromWhite;
+        flipBoard();
+    } else if (key == GLFW_KEY_Z && moveIndex > 0) {
+        game.undo();
+        --moveIndex;
     }
 }
 
 void resize() {
+    bool isFlipped = square_size < 0;
+
     if (width > height) {
         board_size = height;
         board_x = 0.5 * (width - height);
@@ -277,6 +404,10 @@ void resize() {
     square_size = board_size * 0.9 * 0.125;
     square_x = board_x + board_size * 0.05;
     square_y = board_y + board_size * 0.05;
+
+    if (isFlipped) {
+        flipBoard();
+    }
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();

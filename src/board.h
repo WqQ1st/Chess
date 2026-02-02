@@ -23,6 +23,15 @@
 using std::uint8_t;
 using std::uint64_t;
 
+struct Move {
+    //move coords
+    uint8_t from;
+    uint8_t to;
+
+    //promotions
+    uint8_t promotion;
+};
+
 struct BoardState {
     //Bitboards for each piece type
     uint64_t bitboards[12];
@@ -38,24 +47,31 @@ struct BoardState {
 };
 
 class ChessBoard {
-    //Bitboards for each piece type
-    uint64_t bitboards[12];
-
     private:
+        //stack of board states
         BoardState* stateStack;
         int stackIndex;
 
     public:
+        //checking if square has white/black piece on it
+        bool isWhite(uint64_t square);
+        bool isBlack(uint64_t square);
+
+        bool validPiece(uint64_t square);
+
         //setters and getters on a specific square
-        uint8_t getPiece(std::uint8_t square);
+        uint8_t getPiece(uint8_t square);
         void setPiece(uint8_t piece, uint8_t square);
-        void move(uint64_t pieceSquare, uint64_t moveSquare);
+
+        //move and undo
+        void move(const Move& move);
+        void undo();
 
     //constructor
     ChessBoard();
 
     //destructor
-    //~ChessBoard();
+    ~ChessBoard();
 };
 
 #endif
