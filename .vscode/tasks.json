@@ -1,22 +1,13 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-      {
-        "label": "Build Chess (GLFW + GLEW)",
-        "type": "shell",
-        "command": "clang++ src/main.cpp src/board.cpp -I/opt/homebrew/include -L/opt/homebrew/lib -lglfw -lGLEW -framework OpenGL -o chess",
-        "options": { "cwd": "${workspaceFolder}" },
-        "problemMatcher": [],
-        "group": { "kind": "build", "isDefault": true }
-      },
-      {
-        "label": "Run chess",
-        "type": "shell",
-        "command": "${workspaceFolder}/chess",
-        "options": { "cwd": "${workspaceFolder}" },
-        "dependsOn": "Build Chess (GLFW + GLEW)",
-        "problemMatcher": []
-      }
-    ]
-  }
-  
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build Chess",
+      "type": "shell",
+      "command": "rm -f chess && clang++ -std=c++17 -O0 -g src/main.cpp src/board.cpp -I/opt/homebrew/include -L/opt/homebrew/lib -lglfw -lGLEW -framework OpenGL -o chess",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "group": { "kind": "build", "isDefault": true }
+    }
+  ]
+}

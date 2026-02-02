@@ -8,7 +8,8 @@
       "program": "${workspaceFolder}/chess",
       "cwd": "${workspaceFolder}",
       "args": [],
-      "stopOnEntry": false
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build Chess"
     }
   ]
 }

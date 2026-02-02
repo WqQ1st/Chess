@@ -1,4 +1,3 @@
-//0-7: A1-A8, 8-15: B1-B8, etc.
 #include "board.h"
 #include <math.h>
 

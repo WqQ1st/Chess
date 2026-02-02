@@ -295,6 +295,7 @@ void mouseclick(double x, double y) {
     int click_y = floor((y - square_y) / square_size);
 
     if (promote_y == 0) {
+        //std::cout << "promoted" << std::endl;
         if (click_x == promote_x) {
             uint8_t promotion = EMPTY;
             if (click_y == 0) {
@@ -316,6 +317,7 @@ void mouseclick(double x, double y) {
             }
         }
     } else if (promote_y == 7) {
+        //std::cout << "promoted" << std::endl;
         if (click_x == promote_x) {
             uint8_t promotion = EMPTY;
             if (click_y == 7) {
@@ -340,7 +342,7 @@ void mouseclick(double x, double y) {
     //otherwise, if piece is selected, move it (if possible)
     else if (select_x < 8 && select_x >= 0 && select_y < 8 && select_y >= 0 && game.getPiece(select_x + 8 * select_y) != EMPTY) {
         if (click_x < 0 || click_x >= 8 || click_y < 0 || click_y >= 8) {
-            return; //click is not on the board'
+            return; //click is not on the board
         }
         if (click_x == select_x && click_y == select_y) { //clicked on the same square
             select_x = -1;
@@ -371,10 +373,6 @@ void mouseclick(double x, double y) {
         select_x = click_x;
         select_y = click_y;
     }
-    
-
-
-
 }
 
 void keydown(int key) {
@@ -451,6 +449,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 
 
 int main() {
+    //std::cout << "hi" << std::endl;
     //initialize OpenGL
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
