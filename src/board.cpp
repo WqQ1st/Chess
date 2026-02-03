@@ -1,8 +1,22 @@
 #include "board.h"
+#include "attacks.h"
 #include <math.h>
+#include <iostream>
 
 using std::uint8_t;
 using std::uint64_t;
+
+
+void ChessBoard::print_bitboard(uint64_t bitboard) {
+    for (int rank = 0; rank < 8; ++rank) {        // rank 8 → 1
+        for (int file = 0; file < 8; ++file) {    // file A → H
+            int square = file + rank * 8;
+            std::cout << ((bitboard >> square) & 1ULL) << " ";
+        }
+        std::cout << "\n";
+    }
+    std::cout << "\n";
+}
 
 bool ChessBoard::isWhite(uint64_t square) {
     return getPiece(square) < 6;

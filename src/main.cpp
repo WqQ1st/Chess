@@ -4,6 +4,8 @@
 
 #include <iostream>
 #include "board.h"
+#include "bitboards.h"
+#include "attacks.h"
 
 using std::uint8_t;
 using std::uint64_t;
@@ -37,12 +39,9 @@ int moveIndex = 0;
 
 GLFWwindow* window;
 
-void drawPiece(int x, int y, int size, int piece)
-{
+static void drawPiece(int x, int y, int size, int piece) {
 	glBegin(GL_POLYGON);
 	glColor3f(1, 1, 1); //light pieces
-
-
 
 	size = abs(size);
 
@@ -157,7 +156,7 @@ void drawPiece(int x, int y, int size, int piece)
 	glEnd();
 }
 
-void flipBoard() {
+static void flipBoard() {
     square_x += 8 * square_size;
     square_y += 8 * square_size;
     square_size *= -1;
@@ -166,7 +165,7 @@ void flipBoard() {
 
 
 //fn to update screen
-void draw() {
+static void draw() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     //draw background
@@ -288,7 +287,7 @@ void draw() {
 }
 
 
-void mouseclick(double x, double y) {
+static void mouseclick(double x, double y) {
     //std::cout << "clicked on (" << x << ", " << y << ")" << std::endl;
 
     int click_x = floor((x - square_x) / square_size);
@@ -375,7 +374,7 @@ void mouseclick(double x, double y) {
     }
 }
 
-void keydown(int key) {
+static void keydown(int key) {
     if (key == GLFW_KEY_ESCAPE) {
         glfwSetWindowShouldClose(window, true);
     } else if (key == GLFW_KEY_X) {
@@ -386,7 +385,7 @@ void keydown(int key) {
     }
 }
 
-void resize() {
+static void resize() {
     bool isFlipped = square_size < 0;
 
     if (width > height) {
@@ -416,7 +415,7 @@ void resize() {
 
 }
 
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
         double x, y;
         glfwGetCursorPos(window, &x, &y);
@@ -434,13 +433,13 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
     }
 }
 
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (action == GLFW_PRESS) {
         keydown(key);
     }
 }
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+static void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     ::width = width;
     ::height = height;
     glViewport(0, 0, width, height);
@@ -449,7 +448,14 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 
 
 int main() {
-    //std::cout << "hi" << std::endl;
+    /* testing using prints
+    init_leapers_attacks();
+    for (int i = 8; i < 20; ++i) {
+        game.print_bitboard(knightAttacks[i]);
+    }
+    */
+
+
     //initialize OpenGL
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
