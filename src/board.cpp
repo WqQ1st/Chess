@@ -18,6 +18,7 @@ void ChessBoard::print_bitboard(uint64_t bitboard) {
     std::cout << "\n";
 }
 
+/*
 bool ChessBoard::isWhite(uint64_t square) {
     return getPiece(square) < 6;
 }
@@ -33,6 +34,7 @@ bool ChessBoard::validPiece(uint64_t square) {
         return isBlack(square);
     }
 }
+*/
 
 uint8_t ChessBoard::getPiece(uint8_t square) {
     uint64_t mask = uint64_t(1) << square;

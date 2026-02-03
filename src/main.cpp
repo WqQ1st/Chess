@@ -448,13 +448,12 @@ static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 
 
 int main() {
-    /* testing using prints
+    /*//testing using prints
     init_leapers_attacks();
-    for (int i = 8; i < 20; ++i) {
-        game.print_bitboard(knightAttacks[i]);
+    for (int i = 7; i < 20; ++i) {
+        game.print_bitboard(kingAttacks[i]);
     }
     */
-
 
     //initialize OpenGL
     glfwInit();

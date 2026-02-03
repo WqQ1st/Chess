@@ -1,7 +1,7 @@
 #ifndef BOARD_H
 #define BOARD_H
 
-// Bitboard convention: left to right, top to bottom
+// Bitboard convention: left to right, top to bottom. Right ops >> : right, down. Left ops << : left, up.
 // bit 0 = A8
 // bit 7 = H8
 // bit 56 = A1
@@ -66,12 +66,6 @@ class ChessBoard {
 
     public:
         void print_bitboard(uint64_t bitboard);
-
-        //checking if square has white/black piece on it
-        bool isWhite(uint64_t square);
-        bool isBlack(uint64_t square);
-
-        bool validPiece(uint64_t square); //might delete these 3
 
         //setters and getters on a specific square
         uint8_t getPiece(uint8_t square);
