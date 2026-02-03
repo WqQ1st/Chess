@@ -120,6 +120,108 @@ static uint64_t mask_rook_attacks(uint8_t square) {
     return attacks;
 }
 
+
+//generate bishop atks on the fly
+static uint64_t bishop_attacks_on_the_fly(uint8_t square, uint64_t block) {
+    uint64_t attacks = 0;
+
+    //rank, file
+    int r, f;
+
+    //target rank and files
+    int tr = square / 8;
+    int tf = square % 8;
+
+    //generate bishop atks
+    for (r = tr + 1, f = tf + 1; r <= 7 && f <= 7; ++r, ++f) {
+        attacks |= (1ULL << (r * 8 + f));
+        if ((1ULL << (r * 8 + f)) & block) {
+            break;
+        }
+    }
+    for (r = tr - 1, f = tf + 1; r >= 0 && f <= 7; --r, ++f) {
+        attacks |= (1ULL << (r * 8 + f));
+        if ((1ULL << (r * 8 + f)) & block) {
+            break;
+        }
+    }
+    for (r = tr + 1, f = tf - 1; r <= 7 && f >= 0; ++r, --f) {
+        attacks |= (1ULL << (r * 8 + f));
+        if ((1ULL << (r * 8 + f)) & block) {
+            break;
+        }
+    }
+    for (r = tr - 1, f = tf - 1; r >= 0 && f >= 0; --r, --f) {
+        attacks |= (1ULL << (r * 8 + f));
+        if ((1ULL << (r * 8 + f)) & block) {
+            break;
+        }
+    }
+
+    return attacks;
+}
+
+
+//generate rook atks on the fly
+static uint64_t rook_attacks_on_the_fly(uint8_t square, uint64_t block) {
+    uint64_t attacks = 0;
+
+    //rank, file
+    int r, f;
+
+    //target rank and files
+    int tr = square / 8;
+    int tf = square % 8;
+
+    //generate rook atks
+    for (r = tr + 1; r <= 7; ++r) {
+        attacks |= (1ULL << (r * 8 + tf));
+        if ((1ULL << (r * 8 + tf)) & block) {
+            break;
+        }
+    }
+    for (r = tr - 1; r >= 0; --r) {
+        attacks |= (1ULL << (r * 8 + tf));
+        if ((1ULL << (r * 8 + tf)) & block) {
+            break;
+        }
+    }
+    for (f = tf + 1; f <= 7; ++f) {
+        attacks |= (1ULL << (tr * 8 + f));
+        if ((1ULL << (tr * 8 + f)) & block) {
+            break;
+        }
+    }
+    for (f = tf - 1; f >= 0; --f) {
+        attacks |= (1ULL << (tr * 8 + f));
+        if ((1ULL << (tr * 8 + f)) & block) {
+            break;
+        }
+    }
+
+    return attacks;
+}
+
+//set occupancies
+uint64_t set_occupancy(int index, int bits_in_mask, uint64_t attack_mask) {
+    //occupancy map
+    uint64_t occupancy = 0ULL;
+
+    //loop over the range of bits within attack mask
+    for (int count = 0; count < bits_in_mask; ++count) {
+        //pop LS1B index of attack mask
+        int square = pop_lsb(attack_mask);
+
+        //make sure occupancy is on board
+        if (index & (1 << count)) {
+            //populate occupancy map
+            occupancy |= (1ULL << square);
+        }
+    }
+
+    return occupancy;
+}
+
 void init_leapers_attacks() {
     for (int sq = 0; sq < 64; ++sq) {
         pawnAttacks[WHITE][sq] = mask_pawn_attacks(sq, WHITE);

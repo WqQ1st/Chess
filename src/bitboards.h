@@ -18,4 +18,21 @@ constexpr uint64_t NOT_H_FILE  = 0x7f7f7f7f7f7f7f7fULL;
 constexpr uint64_t NOT_AB_FILE = 0xfcfcfcfcfcfcfcfcULL;
 constexpr uint64_t NOT_GH_FILE = 0x3f3f3f3f3f3f3f3fULL;
 
+
+static inline int count_bits(uint64_t bitboard) {
+    return __builtin_popcountll(bitboard);
+}
+
+static inline int get_ls1b_index(uint64_t bitboard) {
+    return __builtin_ctzll(bitboard);
+}
+
+static inline int pop_lsb(uint64_t& bb)
+{
+    int sq = __builtin_ctzll(bb);
+    bb &= bb - 1;
+    return sq;
+}
+
+
 #endif

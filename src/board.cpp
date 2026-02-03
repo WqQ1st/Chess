@@ -2,6 +2,7 @@
 #include "attacks.h"
 #include <math.h>
 #include <iostream>
+#include "bitboards.h"
 
 using std::uint8_t;
 using std::uint64_t;
@@ -17,6 +18,30 @@ void ChessBoard::print_bitboard(uint64_t bitboard) {
     }
     std::cout << "\n";
 }
+
+/*
+static inline int count_bits(uint64_t bitboard) {
+    int count = 0;
+
+    //reset least significant first bit
+    while (bitboard) {
+        count++;
+        bitboard &= bitboard - 1;
+    }
+
+    //return bit count
+    return count;
+}
+
+static inline int get_ls1b_index(uint64_t bitboard) {
+    //make sure bitboard not 0
+    if (bitboard) {
+        return countbits((bitboard & -bitboard) - 1);
+    } else {
+        return -1; //illegal index
+    }
+}
+*/
 
 /*
 bool ChessBoard::isWhite(uint64_t square) {
