@@ -446,14 +446,46 @@ static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     resize();
 }
 
+void init_all() {
+    //initialize leaper atk tables
+    init_leapers_attacks();
+    
+    //init_magic_numbers();
+}
 
 int main() {
+    init_all();
+
     /*//testing using prints
-    init_leapers_attacks();
     for (int i = 7; i < 20; ++i) {
         game.print_bitboard(kingAttacks[i]);
     }
+
+    testing random numbers
+    std::cout << get_random_number() << std::endl;
+    std::cout << get_random_number() << std::endl;
+    std::cout << get_random_number() << std::endl;
+    std::cout << get_random_number() << std::endl;
+    std::cout << get_random_number() << std::endl;
+        
+
+    game.print_bitboard((uint64_t)get_random_u32_number());
+    game.print_bitboard((uint64_t)(get_random_u32_number() & 0xFFFF)); //slice upper (from MS1B side) 16 bits
+    game.print_bitboard(get_random_u64_number());
+    game.print_bitboard(generate_magic_number());
+
     */
+
+
+    //init_magic_numbers(); unnecessary, hard coded them
+
+    for (int square = 0; square < 64; ++square) {
+        std::cout << "0x" << std::hex << rook_magic_numbers[square] << std::dec << "ULL,\n";
+    }
+    std::cout << "\n\n";
+    for (int square = 0; square < 64; ++square) {
+        std::cout << "0x" << std::hex << bishop_magic_numbers[square] << std::dec << "ULL,\n";
+    }
 
     //initialize OpenGL
     glfwInit();
