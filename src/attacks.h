@@ -11,6 +11,14 @@ extern uint64_t pawnAttacks[2][64];
 extern uint64_t knightAttacks[64];
 extern uint64_t kingAttacks[64];
 
+//bishop, rook atk masks
+extern uint64_t bishop_masks[64];
+extern uint64_t rook_masks[64];
+
+//bishop, rook atk tables [square][occupancy]
+extern uint64_t bishop_attacks[64][512];
+extern uint64_t rook_attacks[64][4096];
+
 extern unsigned int random_state;
 
 // bishop relevant occupancy bit count for every square on board
@@ -177,6 +185,25 @@ uint64_t generate_magic_number();
 
 uint64_t find_magic_number(uint8_t square, int relevant_bits, bool bishop);
 void init_magic_numbers();
+void init_sliders_attacks(bool bishop);
+
+inline uint64_t get_bishop_attacks(uint8_t square, uint64_t occupancy) {
+    //get bishop attacks given current occupancy
+    occupancy &= bishop_masks[square];
+    occupancy *= bishop_magic_numbers[square];
+    occupancy >>= (64 - bishop_relevant_bits[square]);
+    
+    return bishop_attacks[square][occupancy];
+}
+
+inline uint64_t get_rook_attacks(uint8_t square, uint64_t occupancy) {
+    //get rook attacks given current occupancy
+    occupancy &= rook_masks[square];
+    occupancy *= rook_magic_numbers[square];
+    occupancy >>= 64 - rook_relevant_bits[square];
+    
+    return rook_attacks[square][occupancy];
+}
 
 //initialize attack boards
 void init_leapers_attacks();

@@ -338,15 +338,17 @@ static void mouseclick(double x, double y) {
             }
         }
     }
+
+    if (click_x == select_x && click_y == select_y) { //clicked on the same square
+        select_x = -1;
+        select_y = -1;
+        return;
+    }
+
     //otherwise, if piece is selected, move it (if possible)
     else if (select_x < 8 && select_x >= 0 && select_y < 8 && select_y >= 0 && game.getPiece(select_x + 8 * select_y) != EMPTY) {
         if (click_x < 0 || click_x >= 8 || click_y < 0 || click_y >= 8) {
             return; //click is not on the board
-        }
-        if (click_x == select_x && click_y == select_y) { //clicked on the same square
-            select_x = -1;
-            select_y = -1;
-            return;
         }
 
         uint8_t from = select_x + 8 * select_y;
@@ -451,6 +453,9 @@ void init_all() {
     init_leapers_attacks();
     
     //init_magic_numbers();
+
+    init_sliders_attacks(true);
+    init_sliders_attacks(false);
 }
 
 int main() {
@@ -474,8 +479,7 @@ int main() {
     game.print_bitboard(get_random_u64_number());
     game.print_bitboard(generate_magic_number());
 
-    */
-
+    
 
     //init_magic_numbers(); unnecessary, hard coded them
 
@@ -486,6 +490,22 @@ int main() {
     for (int square = 0; square < 64; ++square) {
         std::cout << "0x" << std::hex << bishop_magic_numbers[square] << std::dec << "ULL,\n";
     }
+    
+   
+    uint64_t occupancy = 1ULL << 26;
+    occupancy |= 1ULL << 30;
+
+    occupancy |= 1ULL << 19;
+    occupancy |= 1ULL << 35;
+    occupancy |= 1ULL << 26;
+
+
+    occupancy  |= 1ULL << 10;   // a7 (left)
+
+    game.print_bitboard(occupancy);
+    game.print_bitboard(get_bishop_attacks(uint8_t(12), occupancy));
+    game.print_bitboard(get_rook_attacks(uint8_t(12), occupancy));
+    */
 
     //initialize OpenGL
     glfwInit();

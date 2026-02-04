@@ -28,7 +28,8 @@ enum Piece {
 
 enum Color {
     WHITE = 0,
-    BLACK = 1
+    BLACK,
+    BOTH = 2
 };
 
 
@@ -47,6 +48,9 @@ struct Move {
 struct BoardState {
     //Bitboards for each piece type
     uint64_t bitboards[12];
+
+    //occupancies for white, black, all
+    uint64_t occupancies[3];
 
     //castling rights
     bool WKC, BKC, WQC, BQC;
