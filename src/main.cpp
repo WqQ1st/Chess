@@ -6,12 +6,13 @@
 #include "board.h"
 #include "bitboards.h"
 #include "attacks.h"
+#include "square.h"
 
 using std::uint8_t;
 using std::uint64_t;
 
 //Game state
-ChessBoard game;
+ChessBoard game = ChessBoard(tricky_position);
 
 int width = 640;
 int height = 480;

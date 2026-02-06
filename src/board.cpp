@@ -3,10 +3,25 @@
 #include <math.h>
 #include <iostream>
 #include "bitboards.h"
+#include "square.h"
 
 using std::uint8_t;
 using std::uint64_t;
 
+int char_pieces[] = {
+    ['P'] = WHITE_PAWN,
+    ['N'] = WHITE_KNIGHT,
+    ['B'] = WHITE_BISHOP,
+    ['R'] = WHITE_ROOK,
+    ['Q'] = WHITE_QUEEN,
+    ['K'] = WHITE_KING,
+    ['p'] = BLACK_PAWN,
+    ['n'] = BLACK_KNIGHT,
+    ['b'] = BLACK_BISHOP,
+    ['r'] = BLACK_ROOK,
+    ['q'] = BLACK_QUEEN,
+    ['k'] = BLACK_KING,
+};
 
 void ChessBoard::print_bitboard(uint64_t bitboard) {
     for (int rank = 0; rank < 8; ++rank) {        // rank 8 → 1
@@ -80,6 +95,7 @@ void ChessBoard::setPiece(uint8_t piece, uint8_t square) {
 }
 
 void ChessBoard::move(const Move& move) {
+
     //push a new state onto the stack
     stackIndex++;
     stateStack[stackIndex] = stateStack[stackIndex - 1];
@@ -89,7 +105,7 @@ void ChessBoard::move(const Move& move) {
     uint64_t toBoard = uint64_t(1) << move.to;
     uint64_t moveBoard = fromBoard | toBoard;
 
-    //move a piece
+    //move a piece and store which type (ex: white pawn)
     uint8_t movedPiece = EMPTY;
     for (int i = stateStack[stackIndex].turn == WHITE ? 0 : 6; i < (stateStack[stackIndex].turn == WHITE ? 6 : 12); ++i) {
         if (stateStack[stackIndex].bitboards[i] & fromBoard) {
@@ -99,10 +115,13 @@ void ChessBoard::move(const Move& move) {
         }
     }
 
+    int capturedPiece = EMPTY;
+
     //capture a piece
     for (int i = stateStack[stackIndex].turn == WHITE ? 6 : 0; i < (stateStack[stackIndex].turn == WHITE ? 11 : 5); ++i) {
         if (stateStack[stackIndex].bitboards[i] & toBoard) {
             stateStack[stackIndex].bitboards[i] ^= toBoard;
+            capturedPiece = i;
             break;
         }
     }
@@ -124,26 +143,68 @@ void ChessBoard::move(const Move& move) {
     }
 
     //castling
+    /*
     if (movedPiece == WHITE_KING) {
         if (moveBoard == 0x5000000000000000) {
-            stateStack[stackIndex].bitboards[WHITE_ROOK] ^= 0xa000000000000000;
+            stateStack[stackIndex].bitboards[WHITE_ROOK] ^= 0xa000000000000000; //king side
         } else if (moveBoard == 0x1400000000000000) {
             stateStack[stackIndex].bitboards[WHITE_ROOK] ^= 0x0900000000000000;
         }
     }
     else if (movedPiece == BLACK_KING) {
         if (moveBoard == 0x0000000000000050) {
-            stateStack[stackIndex].bitboards[BLACK_ROOK] ^= 0x00000000000000a0;
+            stateStack[stackIndex].bitboards[BLACK_ROOK] ^= 0x00000000000000a0; //king side
         } else if (moveBoard == 0x0000000000000014) {
             stateStack[stackIndex].bitboards[BLACK_ROOK] ^= 0x0000000000000009;
         }
     }
+    */
+
+    auto& st = stateStack[stackIndex];
+
+    // castle move: king moved two squares, so move rook too
+    if (movedPiece == WHITE_KING) {
+        if (moveBoard == (BB(E1) | BB(G1)) && (st.castle & wk)) {          // white king side
+            st.bitboards[WHITE_ROOK] ^= (BB(H1) | BB(F1));
+        } else if (moveBoard == (BB(E1) | BB(C1)) && (st.castle & wq)) {   // white queen side
+            st.bitboards[WHITE_ROOK] ^= (BB(A1) | BB(D1));
+        }
+    }
+    else if (movedPiece == BLACK_KING) {
+        if (moveBoard == (BB(E8) | BB(G8)) && (st.castle & bk)) {          // black king side
+            st.bitboards[BLACK_ROOK] ^= (BB(H8) | BB(F8));
+        } else if (moveBoard == (BB(E8) | BB(C8)) && (st.castle & bq)) {   // black queen side
+            st.bitboards[BLACK_ROOK] ^= (BB(A8) | BB(D8));
+        }
+    }
+
 
     //update castling rights
-    if (moveBoard & 0x9000000000000000) stateStack[stackIndex].WKC = false;
-	if (moveBoard & 0x1100000000000000) stateStack[stackIndex].WQC = false;
-	if (moveBoard & 0x0000000000000090) stateStack[stackIndex].BKC = false;
-	if (moveBoard & 0x0000000000000011) stateStack[stackIndex].BQC = false;
+    
+    //king moved: lose both rights
+    if (movedPiece == WHITE_KING) st.castle &= ~(wk | wq);
+    if (movedPiece == BLACK_KING) st.castle &= ~(bk | bq);
+
+    //rook moved from its home square: lose that side
+    if (movedPiece == WHITE_ROOK) {
+        if (fromBoard & BB(H1)) st.castle &= ~wk;
+        if (fromBoard & BB(A1)) st.castle &= ~wq;
+    }
+    else if (movedPiece == BLACK_ROOK) {
+        if (fromBoard & BB(H8)) st.castle &= ~bk;
+        if (fromBoard & BB(A8)) st.castle &= ~bq;
+    }
+
+    //rook captured on its home square: lose that side
+    if (capturedPiece == WHITE_ROOK) {
+        if (toBoard & BB(H1)) st.castle &= ~wk;
+        if (toBoard & BB(A1)) st.castle &= ~wq;
+    }
+    else if (capturedPiece == BLACK_ROOK) {
+        if (toBoard & BB(H8)) st.castle &= ~bk;
+        if (toBoard & BB(A8)) st.castle &= ~bq;
+    }
+
 
     //promotions
     if (move.promotion != EMPTY) {
@@ -157,12 +218,69 @@ void ChessBoard::move(const Move& move) {
     } else {
         stateStack[stackIndex].turn = WHITE;
     }
+
+    stateStack[stackIndex].update_occupancies();
 }
 
 void ChessBoard::undo() {
     if (stackIndex > 0) {
         --stackIndex;
     }
+}
+
+//parse FEN string
+BoardState ChessBoard::parse_fen(const char *fen) {
+    //empty board
+    BoardState board_state;
+
+    //loop over board
+    for (int rank = 0; rank < 8; ++rank) {
+        for (int file = 0; file < 8; ++file) {
+            int square = rank * 8 + file;
+
+            //match ascii pieces within FEN string
+            if ((*fen >= 'a' && *fen <= 'z') || (*fen >= 'A' && *fen <= 'Z')) {
+                int piece = char_pieces[*fen];
+
+                //set piece on bitboard
+                board_state.bitboards[piece] |= (uint64_t(1) << square);
+
+                //increment pointer
+                fen++;
+            }
+
+            //match empty square numbers
+            if (*fen >= '0' && *fen <= '9') {
+                file += (*fen - '0');
+                fen++;
+            }
+
+            //file separator
+            if (*fen == '/') {
+                fen++;
+            }
+        }
+    }
+
+    //increment pointer to fen string
+    fen++;
+
+    //parse side to move
+    (*fen == 'w') ? (board_state.turn = WHITE) : (board_state.turn = BLACK);
+
+    fen += 2;
+
+    //castling rights
+    while (*fen != ' ') {
+        switch (*fen) {
+            case 'K':
+                //board_state.castle
+        }
+
+        fen++;
+    }
+
+    return board_state;
 }
 
 ChessBoard::ChessBoard() {
@@ -185,14 +303,17 @@ ChessBoard::ChessBoard() {
 	stateStack[0].bitboards[BLACK_QUEEN]  = 0x0000000000000008;
 	stateStack[0].bitboards[BLACK_KING]   = 0x0000000000000010;
 
-    stateStack[0].WKC = true;
-    stateStack[0].WQC = true;
-    stateStack[0].BKC = true;
-    stateStack[0].BQC = true;
+    //passant target, castling rights, turn are already default set
 
-    stateStack[0].passantTarget = 0;
+    stateStack[0].update_occupancies();
+}
 
-    stateStack[0].turn = WHITE;
+ChessBoard::ChessBoard(const char *fen) {
+    stateStack = new BoardState[1000];
+    stackIndex = 0;
+
+    stateStack[0] = parse_fen(fen);
+    stateStack[0].update_occupancies();
 }
 
 ChessBoard::~ChessBoard() {
