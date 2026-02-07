@@ -12,7 +12,7 @@ using std::uint8_t;
 using std::uint64_t;
 
 //Game state
-ChessBoard game = ChessBoard(tricky_position);
+ChessBoard game = ChessBoard();
 
 int width = 640;
 int height = 480;
@@ -507,6 +507,9 @@ int main() {
     game.print_bitboard(get_bishop_attacks(uint8_t(12), occupancy));
     game.print_bitboard(get_rook_attacks(uint8_t(12), occupancy));
     */
+
+    //game.print_occupancy();
+
 
     //initialize OpenGL
     glfwInit();

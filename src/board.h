@@ -124,6 +124,8 @@ class ChessBoard {
 
     public:
         void print_bitboard(uint64_t bitboard);
+        void print_bitboard();
+        void print_occupancy();
 
         BoardState parse_fen(const char *fen);
 

@@ -34,6 +34,24 @@ void ChessBoard::print_bitboard(uint64_t bitboard) {
     std::cout << "\n";
 }
 
+void ChessBoard::print_bitboard() {
+    for (int i = 0; i < 12; i++) {
+        print_bitboard(stateStack[stackIndex].bitboards[i]);
+    }
+    std::cout << "\n";
+}
+
+void ChessBoard::print_occupancy() {
+    for (int rank = 0; rank < 8; ++rank) {        // rank 8 → 1
+        for (int file = 0; file < 8; ++file) {    // file A → H
+            int square = file + rank * 8;
+            std::cout << ((stateStack[stackIndex].occupancies[2] >> square) & 1ULL) << " ";
+        }
+        std::cout << "\n";
+    }
+    std::cout << "\n";
+}
+
 /*
 static inline int count_bits(uint64_t bitboard) {
     int count = 0;
@@ -263,16 +281,27 @@ BoardState ChessBoard::parse_fen(const char *fen) {
     }
 
     //increment pointer to fen string
-    fen += 2;
+    while (*fen != ' ') {
+        fen++;
+    }
+    while (*fen == ' ') {
+        fen++;
+    }
 
     //parse side to move
-    (*fen == 'w') ? (board_state.turn = WHITE) : (board_state.turn = BLACK);
+    board_state.turn = (*fen == 'w') ? WHITE : BLACK;
 
-    fen += 2;
-
+    //advance to next field (castling)
+    while (*fen != ' ') {
+        fen++;
+    }
+    while (*fen == ' ') {
+        fen++;
+    }
 
     //parse castling rights
-    board_state.castle &= (wk | wq | bk | bq);
+    board_state.castle = 0; //resets castling rights
+
     while (*fen != ' ') {
         switch (*fen) {
             case 'K':
@@ -303,13 +332,29 @@ BoardState ChessBoard::parse_fen(const char *fen) {
         int file = fen[0] - 'a';
         int rank = 8 - (fen[1] - '0'); //string's 8th rank is 0 in code
 
-        board_state.passantTarget = rank * 8 + file;
+        board_state.passantTarget = (uint64_t(1) << (rank * 8 + file));
     }
+
+    board_state.update_occupancies();
+
+    //TODO: add parsing for the last two numbers, turns after moved pawn/piece capture and turns played.
 
     return board_state;
 }
 
+ChessBoard::ChessBoard(const char *fen) {
+    stateStack = new BoardState[1000];
+    stackIndex = 0;
+
+    stateStack[0] = parse_fen(fen);
+    //parse fen should alr update occupancies
+}
+
+ChessBoard::ChessBoard() : ChessBoard(start_position) {}
+
+/*
 ChessBoard::ChessBoard() {
+    
     stateStack = new BoardState[1000];
     stackIndex = 0;
 
@@ -332,15 +377,11 @@ ChessBoard::ChessBoard() {
     //passant target, castling rights, turn are already default set
 
     stateStack[0].update_occupancies();
+    
+    ChessBoard(start_position);
 }
+*/
 
-ChessBoard::ChessBoard(const char *fen) {
-    stateStack = new BoardState[1000];
-    stackIndex = 0;
-
-    stateStack[0] = parse_fen(fen);
-    stateStack[0].update_occupancies();
-}
 
 ChessBoard::~ChessBoard() {
     delete[] stateStack;
