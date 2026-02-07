@@ -263,21 +263,47 @@ BoardState ChessBoard::parse_fen(const char *fen) {
     }
 
     //increment pointer to fen string
-    fen++;
+    fen += 2;
 
     //parse side to move
     (*fen == 'w') ? (board_state.turn = WHITE) : (board_state.turn = BLACK);
 
     fen += 2;
 
-    //castling rights
+
+    //parse castling rights
+    board_state.castle &= (wk | wq | bk | bq);
     while (*fen != ' ') {
         switch (*fen) {
             case 'K':
-                //board_state.castle
+                board_state.castle |= wk;
+                break;
+            case 'Q':
+                board_state.castle |= wq;
+                break;
+            case 'k':
+                board_state.castle |= bk;
+                break;
+            case 'q':
+                board_state.castle |= bq;
+                break;
+            case '-':
+                break;
         }
 
         fen++;
+    }
+
+    //go to en passant square
+    fen++;
+
+    //parse en passant square
+    if (*fen != '-') {
+        //parse en passant file and rank
+        int file = fen[0] - 'a';
+        int rank = 8 - (fen[1] - '0'); //string's 8th rank is 0 in code
+
+        board_state.passantTarget = rank * 8 + file;
     }
 
     return board_state;
