@@ -374,6 +374,7 @@ static void mouseclick(double x, double y) {
     } else {
         select_x = click_x;
         select_y = click_y;
+        //std::cout << "is attacked by white: " << is_square_attacked(select_x + select_y * 8, WHITE, game.curr_state()) << std::endl;
     }
 }
 

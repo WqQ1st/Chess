@@ -9,9 +9,9 @@ using std::uint8_t;
 using std::uint64_t;
 
 //initialize attack tables
-uint64_t pawnAttacks[2][64];
-uint64_t knightAttacks[64];
-uint64_t kingAttacks[64];
+uint64_t pawn_attacks[2][64];
+uint64_t knight_attacks[64];
+uint64_t king_attacks[64];
 uint64_t bishop_attacks[64][512];
 uint64_t rook_attacks[64][4096];
 
@@ -316,7 +316,7 @@ uint64_t find_magic_number(uint8_t square, int relevant_bits, bool bishop) {
         //test magic index loop
         for (index = 0, fail = 0; !fail && index < occupancy_indices; ++index) {
             //init magic index
-            int magic_index = (int)((occupancies[square] * magic_number) >> (64 - relevant_bits));
+            int magic_index = (int)((occupancies[index] * magic_number) >> (64 - relevant_bits));
 
             //if magic index works
             if (used_attacks[magic_index] == 0ULL) {
@@ -413,13 +413,70 @@ inline uint64_t get_rook_attacks(uint8_t square, uint64_t occupancy) {
     
     return rook_attacks[square][occupancy];
 }
+
+//get queen attacks
+inline uint64_t get_queen_attacks(uint8_t square, uint64_t occupancy) {
+    return (get_bishop_attacks(square, occupancy) | get_rook_attacks(square, occupancy));
+}
 */
+
+//is square attacked by the given side
+int is_square_attacked(int square, int side, const BoardState& state) {
+
+    const uint64_t *bitboards = state.bitboards;
+
+    bool verbose = true;
+
+    //attacked by white pawns
+    if ((side == WHITE) && pawn_attacks[BLACK][square] & bitboards[WHITE_PAWN]) {
+        if (verbose) std::cout << "attacked by pawn" << std::endl;
+        return 1;
+    }
+
+    //attacked by black pawns
+    if ((side == BLACK) && pawn_attacks[WHITE][square] & bitboards[BLACK_PAWN]) {
+        if (verbose) std::cout << "attacked by pawn" << std::endl;
+        return 1;
+    }
+
+    //attacked by knights
+    if (knight_attacks[square] & ((side == WHITE) ? bitboards[WHITE_KNIGHT] : bitboards[BLACK_KNIGHT])) {
+        if (verbose) std::cout << "attacked by knight" << std::endl;
+        return 1;
+    }
+
+    //attacked by king
+    if (king_attacks[square] & ((side == WHITE) ? bitboards[WHITE_KING] : bitboards[BLACK_KING])) {
+        if (verbose) std::cout << "attacked by king" << std::endl;
+        return 1;
+    }
+
+    //attacked by bishops
+    if (get_bishop_attacks(square, state.occupancies[BOTH]) & ((side == WHITE) ? bitboards[WHITE_BISHOP] : bitboards[BLACK_BISHOP])) {
+        if (verbose) std::cout << "attacked by bishop" << std::endl;
+        return 1;
+    }
+
+    //attacked by rooks
+    if (get_rook_attacks(square, state.occupancies[BOTH]) & ((side == WHITE) ? bitboards[WHITE_ROOK] : bitboards[BLACK_ROOK])) {
+        if (verbose) std::cout << "attacked by rook" << std::endl;
+        return 1;
+    }
+
+    //attacked by queens
+    if (get_queen_attacks(square, state.occupancies[BOTH]) & ((side == WHITE) ? bitboards[WHITE_QUEEN] : bitboards[BLACK_QUEEN])) {
+        if (verbose) std::cout << "attacked by queen" << std::endl;
+        return 1;
+    }
+
+    return 0;
+}
 
 void init_leapers_attacks() {
     for (int sq = 0; sq < 64; ++sq) {
-        pawnAttacks[WHITE][sq] = mask_pawn_attacks(sq, WHITE);
-        pawnAttacks[BLACK][sq] = mask_pawn_attacks(sq, BLACK);
-        knightAttacks[sq] = mask_knight_attacks(sq);
-        kingAttacks[sq] = mask_king_attacks(sq);
+        pawn_attacks[WHITE][sq] = mask_pawn_attacks(sq, WHITE);
+        pawn_attacks[BLACK][sq] = mask_pawn_attacks(sq, BLACK);
+        knight_attacks[sq] = mask_knight_attacks(sq);
+        king_attacks[sq] = mask_king_attacks(sq);
     }
 }

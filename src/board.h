@@ -101,7 +101,7 @@ struct BoardState {
             occupancies[BLACK] |= bitboards[i];
         }
 
-        occupancies[2] = occupancies[WHITE] | occupancies[BLACK];
+        occupancies[BOTH] = occupancies[WHITE] | occupancies[BLACK];
     }
 
     int piece_on(uint8_t square) {
@@ -136,6 +136,8 @@ class ChessBoard {
         //move and undo
         void move(const Move& move);
         void undo();
+
+        BoardState curr_state();
 
     //constructor
     ChessBoard();

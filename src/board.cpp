@@ -342,6 +342,10 @@ BoardState ChessBoard::parse_fen(const char *fen) {
     return board_state;
 }
 
+BoardState ChessBoard::curr_state() {
+    return stateStack[stackIndex];
+}
+
 ChessBoard::ChessBoard(const char *fen) {
     stateStack = new BoardState[1000];
     stackIndex = 0;

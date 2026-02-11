@@ -3,13 +3,14 @@
 
 #include <cstdint>
 #include "bitboards.h"
+#include "board.h"
 
 using std::uint8_t;
 using std::uint64_t;
 
-extern uint64_t pawnAttacks[2][64];
-extern uint64_t knightAttacks[64];
-extern uint64_t kingAttacks[64];
+extern uint64_t pawn_attacks[2][64];
+extern uint64_t knight_attacks[64];
+extern uint64_t king_attacks[64];
 
 //bishop, rook atk masks
 extern uint64_t bishop_masks[64];
@@ -204,6 +205,14 @@ inline uint64_t get_rook_attacks(uint8_t square, uint64_t occupancy) {
     
     return rook_attacks[square][occupancy];
 }
+
+//get queen attacks
+inline uint64_t get_queen_attacks(uint8_t square, uint64_t occupancy) {
+    return (get_bishop_attacks(square, occupancy) | get_rook_attacks(square, occupancy));
+}
+
+//check if square is attacked
+int is_square_attacked(int square, int side, const BoardState& state);
 
 //initialize attack boards
 void init_leapers_attacks();
