@@ -124,14 +124,8 @@ void ChessBoard::move(const Move& move) {
     uint64_t moveBoard = fromBoard | toBoard;
 
     //move a piece and store which type (ex: white pawn)
-    uint8_t movedPiece = EMPTY;
-    for (int i = stateStack[stackIndex].turn == WHITE ? 0 : 6; i < (stateStack[stackIndex].turn == WHITE ? 6 : 12); ++i) {
-        if (stateStack[stackIndex].bitboards[i] & fromBoard) {
-            stateStack[stackIndex].bitboards[i] ^= moveBoard;
-            movedPiece = i;
-            break;
-        }
-    }
+    uint8_t movedPiece = move.piece;
+    stateStack[stackIndex].bitboards[movedPiece] ^= (fromBoard | toBoard);
 
     int capturedPiece = EMPTY;
 
@@ -249,7 +243,7 @@ void ChessBoard::undo() {
 //parse FEN string
 BoardState ChessBoard::parse_fen(const char *fen) {
     //empty board
-    BoardState board_state;
+    BoardState board_state{};
 
     //loop over board
     for (int rank = 0; rank < 8; ++rank) {
@@ -342,7 +336,7 @@ BoardState ChessBoard::parse_fen(const char *fen) {
     return board_state;
 }
 
-BoardState ChessBoard::curr_state() {
+BoardState& ChessBoard::curr_state() {
     return stateStack[stackIndex];
 }
 
@@ -352,6 +346,7 @@ ChessBoard::ChessBoard(const char *fen) {
 
     stateStack[0] = parse_fen(fen);
     //parse fen should alr update occupancies
+    stateStack[stackIndex].update_occupancies();
 }
 
 ChessBoard::ChessBoard() : ChessBoard(start_position) {}

@@ -1,150 +1,177 @@
-#ifndef BOARD_H
-#define BOARD_H
+    #ifndef BOARD_H
+    #define BOARD_H
 
-// Bitboard convention: left to right, top to bottom. Right ops >> : right, down. Left ops << : left, up.
-// bit 0 = A8
-// bit 7 = H8
-// bit 56 = A1
-// bit 63 = H1
+    // Bitboard convention: left to right, top to bottom. Right ops >> : right, down. Left ops << : left, up.
+    // bit 0 = A8
+    // bit 7 = H8
+    // bit 56 = A1
+    // bit 63 = H1
 
-// FEN dedug positions
-#define empty_board "8/8/8/8/8/8/8/8 w - - "
-#define start_position "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "
-#define tricky_position "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1 "
-#define killer_position "rnbqkb1r/pp1p1pPp/8/2p1pP2/1P1P4/3P3P/P1P1P3/RNBQKBNR w KQkq e6 0 1"
-#define cmk_position "r2q1rk1/ppp2ppp/2n1bn2/2b1p3/3pP3/3P1NPP/PPP1NPB1/R1BQ1RK1 b - - 0 9 "
+    // FEN dedug positions
+    #define empty_board "8/8/8/8/8/8/8/8 w - - "
+    #define start_position "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "
+    #define tricky_position "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1 "
+    #define killer_position "rnbqkb1r/pp1p1pPp/8/2p1pP2/1P1P4/3P3P/P1P1P3/RNBQKBNR w KQkq e6 0 1"
+    #define cmk_position "r2q1rk1/ppp2ppp/2n1bn2/2b1p3/3pP3/3P1NPP/PPP1NPB1/R1BQ1RK1 b - - 0 9 "
 
-#include <cstdint>
-#include "square.h"
+    #include <cstdint>
+    #include "square.h"
+    #include <string>
 
-enum Piece {
-    WHITE_PAWN = 0,
-    WHITE_KNIGHT,
-    WHITE_BISHOP,
-    WHITE_ROOK,
-    WHITE_QUEEN,
-    WHITE_KING,
-    BLACK_PAWN,
-    BLACK_KNIGHT,
-    BLACK_BISHOP,
-    BLACK_ROOK,
-    BLACK_QUEEN,
-    BLACK_KING,
-    EMPTY = 12
-};
+    enum Piece {
+        WHITE_PAWN = 0,
+        WHITE_KNIGHT,
+        WHITE_BISHOP,
+        WHITE_ROOK,
+        WHITE_QUEEN,
+        WHITE_KING,
+        BLACK_PAWN,
+        BLACK_KNIGHT,
+        BLACK_BISHOP,
+        BLACK_ROOK,
+        BLACK_QUEEN,
+        BLACK_KING,
+        EMPTY = 12
+    };
 
-extern int char_pieces[];
+    extern int char_pieces[];
 
-enum Color {
-    WHITE = 0,
-    BLACK,
-    BOTH = 2
-};
+    enum Color {
+        WHITE = 0,
+        BLACK,
+        BOTH = 2
+    };
 
-/*
-    bin  dec
-    
-   0001    1  white king can castle to the king side
-   0010    2  white king can castle to the queen side
-   0100    4  black king can castle to the king side
-   1000    8  black king can castle to the queen side
+    /*
+        bin  dec
+        
+    0001    1  white king can castle to the king side
+    0010    2  white king can castle to the queen side
+    0100    4  black king can castle to the king side
+    1000    8  black king can castle to the queen side
 
-   examples
+    examples
 
-   1111       both sides an castle both directions
-   1001       black king => queen side
-              white king => king side
+    1111       both sides an castle both directions
+    1001       black king => queen side
+                white king => king side
 
-*/
+    */
 
-enum { wk = 1, wq = 2, bk = 4, bq = 8 };
+    enum { wk = 1, wq = 2, bk = 4, bq = 8 };
 
 
-using std::uint8_t;
-using std::uint64_t;
+    using std::uint8_t;
+    using std::uint64_t;
 
-struct Move {
-    //move coords
-    uint8_t from;
-    uint8_t to;
+    struct Move {
+        uint8_t from;
+        uint8_t to;
 
-    //promotions
-    uint8_t promotion;
-};
+        int capture; //0: no capture, 1: capture
 
-struct BoardState {
-    //Bitboards for each piece type
-    uint64_t bitboards[12]{};
+        uint8_t piece;      // moving piece (WHITE_PAWN, etc.)
 
-    //occupancies for white, black, all
-    uint64_t occupancies[3]{};
+        uint8_t promotion;  // promoted piece or EMPTY
 
-    //castling rights
-    uint8_t castle = wk | wq | bk | bq; //all castling rights preserved, 1111
+        Move() = default;
 
-    //bitboard that represents en-passant target
-    uint64_t passantTarget = 0;
+        Move(uint8_t f, uint8_t t, uint8_t p, uint8_t promo = EMPTY)
+        : from(f), to(t), piece(p), promotion(promo) {}
 
-    //whose turn it is
-    uint8_t turn = WHITE;
 
-    //update occupancies to reflect current board
-    void update_occupancies() {
-        occupancies[WHITE] = 0ULL;
-        occupancies[BLACK] = 0ULL;
+    std::string to_string() const {
+            auto square_to_string = [](uint8_t sq) {
+                char file = 'a' + (sq % 8);
+                char rank = '8' - (sq / 8);
+                return std::string{file} + rank;
+            };
 
-        for (int i = 0; i < 6; ++i) {
-            occupancies[WHITE] |= bitboards[i];
-        }
+            std::string result = square_to_string(from) + square_to_string(to);
 
-        for (int i = 6; i < 12; ++i) {
-            occupancies[BLACK] |= bitboards[i];
-        }
+            if (promotion != EMPTY) {
+                char promoChar = 'q';
+                if (promotion == WHITE_ROOK || promotion == BLACK_ROOK) promoChar = 'r';
+                else if (promotion == WHITE_BISHOP || promotion == BLACK_BISHOP) promoChar = 'b';
+                else if (promotion == WHITE_KNIGHT || promotion == BLACK_KNIGHT) promoChar = 'n';
 
-        occupancies[BOTH] = occupancies[WHITE] | occupancies[BLACK];
-    }
-
-    int piece_on(uint8_t square) {
-        int piece = EMPTY;
-        for (int i = 0; i < 12; ++i) {
-            if (bitboards[i] && square) {
-                piece = i;
-                break;
+                result += promoChar;
             }
+
+            return result;
         }
-        return piece;
-    }
-};
+    };
 
-class ChessBoard {
-    private:
-        //stack of board states
-        BoardState* stateStack;
-        int stackIndex;
+    struct BoardState {
+        //Bitboards for each piece type
+        uint64_t bitboards[12]{};
 
-    public:
-        void print_bitboard(uint64_t bitboard);
-        void print_bitboard();
-        void print_occupancy();
+        //occupancies for white, black, all
+        uint64_t occupancies[3]{};
 
-        BoardState parse_fen(const char *fen);
+        //castling rights
+        uint8_t castle = wk | wq | bk | bq; //all castling rights preserved, 1111
 
-        //setters and getters on a specific square
-        uint8_t getPiece(uint8_t square);
-        void setPiece(uint8_t piece, uint8_t square);
+        //bitboard that represents en-passant target
+        uint64_t passantTarget = 0;
 
-        //move and undo
-        void move(const Move& move);
-        void undo();
+        //whose turn it is
+        uint8_t turn = WHITE;
 
-        BoardState curr_state();
+        //update occupancies to reflect current board
+        void update_occupancies() {
+            occupancies[WHITE] = 0ULL;
+            occupancies[BLACK] = 0ULL;
 
-    //constructor
-    ChessBoard();
-    ChessBoard(const char *fen);
+            for (int i = 0; i < 6; ++i) {
+                occupancies[WHITE] |= bitboards[i];
+            }
 
-    //destructor
-    ~ChessBoard();
-};
+            for (int i = 6; i < 12; ++i) {
+                occupancies[BLACK] |= bitboards[i];
+            }
 
-#endif
+            occupancies[BOTH] = occupancies[WHITE] | occupancies[BLACK];
+        }
+
+        int piece_on(uint8_t square) const {
+            uint64_t mask = 1ULL << square;
+            for (int i = 0; i < 12; ++i) {
+                if (bitboards[i] & mask) return i;
+            }
+            return EMPTY;
+        }
+    };
+
+    class ChessBoard {
+        private:
+            //stack of board states
+            BoardState* stateStack;
+            int stackIndex;
+
+        public:
+            void print_bitboard(uint64_t bitboard);
+            void print_bitboard();
+            void print_occupancy();
+
+            BoardState parse_fen(const char *fen);
+
+            //setters and getters on a specific square
+            uint8_t getPiece(uint8_t square);
+            void setPiece(uint8_t piece, uint8_t square);
+
+            //move and undo
+            void move(const Move& move);
+            void undo();
+
+            BoardState& curr_state();
+
+        //constructor
+        ChessBoard();
+        ChessBoard(const char *fen);
+
+        //destructor
+        ~ChessBoard();
+    };
+
+    #endif

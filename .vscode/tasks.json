@@ -4,7 +4,7 @@
     {
       "label": "Build Chess",
       "type": "shell",
-      "command": "rm -f chess && clang++ -std=c++17 -O0 -g src/main.cpp src/board.cpp src/attacks.cpp -I/opt/homebrew/include -L/opt/homebrew/lib -lglfw -lGLEW -framework OpenGL -o chess",
+      "command": "rm -f chess && clang++ -std=c++17 -O0 -g src/main.cpp src/board.cpp src/attacks.cpp src/movegen.cpp -I/opt/homebrew/include -L/opt/homebrew/lib -lglfw -lGLEW -framework OpenGL -o chess",
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
       "group": { "kind": "build", "isDefault": true }

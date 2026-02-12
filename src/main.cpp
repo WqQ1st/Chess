@@ -7,6 +7,8 @@
 #include "bitboards.h"
 #include "attacks.h"
 #include "square.h"
+#include "movegen.h"
+#include <vector>
 
 using std::uint8_t;
 using std::uint64_t;
@@ -289,7 +291,16 @@ static void draw() {
 
 
 static void mouseclick(double x, double y) {
+    std::vector<Move> moves;
+    generate_moves(game.curr_state(), moves);
+    
+    /*
+    std::cout << "all moves for " << int(game.curr_state().turn) << ": " << std::endl;
+    for (const auto& m : moves) {
+        std::cout << m.to_string() << "\n";
+    }
     //std::cout << "clicked on (" << x << ", " << y << ")" << std::endl;
+    */
 
     int click_x = floor((x - square_x) / square_size);
     int click_y = floor((y - square_y) / square_size);
@@ -358,6 +369,7 @@ static void mouseclick(double x, double y) {
         moveStack[moveIndex].to = to;
         moveStack[moveIndex].promotion = EMPTY;
 
+        moveStack[moveIndex].piece = game.getPiece(from);
         game.move(moveStack[moveIndex++]);
 
         //check to see if pawn promoted

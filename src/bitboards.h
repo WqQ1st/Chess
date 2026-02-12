@@ -34,5 +34,9 @@ static inline int pop_lsb(uint64_t& bb)
     return sq;
 }
 
+static inline int get_bit(uint64_t bitboard, int square) {
+    return (bitboard >> square) & 1ULL;
+}
+
 
 #endif
