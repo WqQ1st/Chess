@@ -241,100 +241,71 @@ void ChessBoard::undo() {
 }
 
 //parse FEN string
-BoardState ChessBoard::parse_fen(const char *fen) {
-    //empty board
-    BoardState board_state{};
+BoardState ChessBoard::parse_fen(const char* fen) {
+    BoardState s{};
 
-    //loop over board
-    for (int rank = 0; rank < 8; ++rank) {
-        for (int file = 0; file < 8; ++file) {
+    int rank = 0; // 0 is rank 8
+    int file = 0;
+
+    while (rank < 8 && *fen) {
+        char c = *fen;
+
+        if (c == '/') {
+            rank++;
+            file = 0;
+            fen++;
+            continue;
+        }
+
+        if (c >= '1' && c <= '8') {
+            file += (c - '0');
+            fen++;
+            continue;
+        }
+
+        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
+            int piece = char_pieces[c];
             int square = rank * 8 + file;
-
-            //match ascii pieces within FEN string
-            if ((*fen >= 'a' && *fen <= 'z') || (*fen >= 'A' && *fen <= 'Z')) {
-                int piece = char_pieces[*fen];
-
-                //set piece on bitboard
-                board_state.bitboards[piece] |= (uint64_t(1) << square);
-
-                //increment pointer
-                fen++;
-            }
-
-            //match empty square numbers
-            if (*fen >= '0' && *fen <= '9') {
-                file += (*fen - '0');
-                fen++;
-            }
-
-            //file separator
-            if (*fen == '/') {
-                fen++;
-            }
-        }
-    }
-
-    //increment pointer to fen string
-    while (*fen != ' ') {
-        fen++;
-    }
-    while (*fen == ' ') {
-        fen++;
-    }
-
-    //parse side to move
-    board_state.turn = (*fen == 'w') ? WHITE : BLACK;
-
-    //advance to next field (castling)
-    while (*fen != ' ') {
-        fen++;
-    }
-    while (*fen == ' ') {
-        fen++;
-    }
-
-    //parse castling rights
-    board_state.castle = 0; //resets castling rights
-
-    while (*fen != ' ') {
-        switch (*fen) {
-            case 'K':
-                board_state.castle |= wk;
-                break;
-            case 'Q':
-                board_state.castle |= wq;
-                break;
-            case 'k':
-                board_state.castle |= bk;
-                break;
-            case 'q':
-                board_state.castle |= bq;
-                break;
-            case '-':
-                break;
+            s.bitboards[piece] |= (1ULL << square);
+            file++;
+            fen++;
+            continue;
         }
 
+        if (c == ' ') break;
         fen++;
     }
 
-    //go to en passant square
-    fen++;
+    while (*fen == ' ') fen++;
 
-    //parse en passant square
+    s.turn = (*fen == 'w') ? WHITE : BLACK;
+    while (*fen && *fen != ' ') fen++;
+    while (*fen == ' ') fen++;
+
+    s.castle = 0;
+    while (*fen && *fen != ' ') {
+        if (*fen == 'K') s.castle |= wk;
+        else if (*fen == 'Q') s.castle |= wq;
+        else if (*fen == 'k') s.castle |= bk;
+        else if (*fen == 'q') s.castle |= bq;
+        fen++;
+    }
+    while (*fen == ' ') fen++;
+
+    s.passantTarget = NO_SQ;
     if (*fen != '-') {
-        //parse en passant file and rank
-        int file = fen[0] - 'a';
-        int rank = 8 - (fen[1] - '0'); //string's 8th rank is 0 in code
-
-        board_state.passantTarget = (uint64_t(1) << (rank * 8 + file));
+        int epFile = fen[0] - 'a';
+        int epRank = 8 - (fen[1] - '0'); // a8 is 0
+        s.passantTarget = epRank * 8 + epFile; // store square index
+        fen += 2;
+    } else {
+        fen++;
     }
 
-    board_state.update_occupancies();
-
-    //TODO: add parsing for the last two numbers, turns after moved pawn/piece capture and turns played.
-
-    return board_state;
+    s.update_occupancies();
+    return s;
 }
+
 
 BoardState& ChessBoard::curr_state() {
     return stateStack[stackIndex];

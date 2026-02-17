@@ -14,7 +14,7 @@ using std::uint8_t;
 using std::uint64_t;
 
 //Game state
-ChessBoard game = ChessBoard();
+ChessBoard game = ChessBoard(tricky_position);
 
 int width = 640;
 int height = 480;
@@ -213,6 +213,11 @@ static void draw() {
         glEnd();
     }
 
+    //show legal moves
+    if (select_x < 8 && select_x >= 0 && select_y < 8 && select_y >= 0) {
+        //use attack tables to highlight all legal moves
+    }
+
     //show prev move
     if (moveIndex > 0) {
     int from = moveStack[moveIndex - 1].from;
@@ -293,14 +298,14 @@ static void draw() {
 static void mouseclick(double x, double y) {
     std::vector<Move> moves;
     generate_moves(game.curr_state(), moves);
+
     
-    /*
     std::cout << "all moves for " << int(game.curr_state().turn) << ": " << std::endl;
     for (const auto& m : moves) {
         std::cout << m.to_string() << "\n";
     }
     //std::cout << "clicked on (" << x << ", " << y << ")" << std::endl;
-    */
+    
 
     int click_x = floor((x - square_x) / square_size);
     int click_y = floor((y - square_y) / square_size);
