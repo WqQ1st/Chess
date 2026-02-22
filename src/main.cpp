@@ -220,8 +220,8 @@ static void draw() {
 
     //show prev move
     if (moveIndex > 0) {
-    int from = moveStack[moveIndex - 1].from;
-    int to   = moveStack[moveIndex - 1].to;
+    int from = moveStack[moveIndex - 1].from();
+    int to   = moveStack[moveIndex - 1].to();
 
     glLineWidth(std::abs(square_size) * 0.15);
     glColor3f(0, 1, 0);
@@ -300,9 +300,9 @@ static void mouseclick(double x, double y) {
     generate_moves(game.curr_state(), moves);
 
     
-    std::cout << "all moves for " << int(game.curr_state().turn) << ": " << std::endl;
+    //std::cout << "all moves for " << int(game.curr_state().turn) << ": " << std::endl;
     for (const auto& m : moves) {
-        std::cout << m.to_string() << "\n";
+        //std::cout << m.to_string() << "\n";
     }
     //std::cout << "clicked on (" << x << ", " << y << ")" << std::endl;
     
@@ -324,7 +324,7 @@ static void mouseclick(double x, double y) {
                 promotion = WHITE_KNIGHT;
             }
             if (promotion != EMPTY) {
-                moveStack[moveIndex - 1].promotion = promotion;
+                moveStack[moveIndex - 1].promote(promotion);
                 game.undo();
                 game.move(moveStack[moveIndex - 1]);
 
@@ -346,7 +346,7 @@ static void mouseclick(double x, double y) {
                 promotion = BLACK_KNIGHT;
             }
             if (promotion != EMPTY) {
-                moveStack[moveIndex - 1].promotion = promotion;
+                moveStack[moveIndex - 1].promote(promotion);
                 game.undo();
                 game.move(moveStack[moveIndex - 1]);
 
@@ -370,11 +370,16 @@ static void mouseclick(double x, double y) {
 
         uint8_t from = select_x + 8 * select_y;
         uint8_t to = click_x + 8 * click_y;
-        moveStack[moveIndex].from = from;
-        moveStack[moveIndex].to = to;
-        moveStack[moveIndex].promotion = EMPTY;
+        uint8_t piece = game.getPiece(from);
+        uint8_t promoted = EMPTY;
+        MoveFlag flags = MF_NONE;
+        if (game.getPiece(to) != EMPTY) {
+            flags = MoveFlag(flags | MF_CAPTURE);
+        }
 
-        moveStack[moveIndex].piece = game.getPiece(from);
+        Move move(from, to, piece, promoted, flags);
+
+        moveStack[moveIndex] = move;
         game.move(moveStack[moveIndex++]);
 
         //check to see if pawn promoted

@@ -89,44 +89,60 @@
         uint32_t move = 0;
 
         Move(uint8_t source, uint8_t target, uint8_t piece, uint8_t promoted, MoveFlag flags) {
-            move = (source) | (target << 6) | (piece << 12) | (promoted << 16) | (flags << 20);
+            move = uint32_t(source)|(uint32_t(target) << 6)|(uint32_t(piece) << 12)|(uint32_t(promoted) << 16)|(uint32_t(flags) << 20);
         }
 
+        Move() {
 
-        uint8_t from;
-        uint8_t to;
+        }
 
-        int capture; //0: no capture, 1: capture
+        uint8_t from() const { //source
+            return move & 63u;
+        }
 
-        uint8_t piece;      // moving piece (WHITE_PAWN, etc.)
+        uint8_t to() const { //target
+            return (move >> 6) & 63u;
+        }
 
-        uint8_t promotion;  // promoted piece or EMPTY
+        uint8_t piece() const {
+            return (move >> 12) & 15u;
+        }
 
-        Move() = default;
+        uint8_t promotion() const { 
+            return (move >> 16) & 15u;
+        }
 
-        Move(uint8_t f, uint8_t t, uint8_t p, uint8_t promo = EMPTY)
-        : from(f), to(t), piece(p), promotion(promo) {}
+        uint8_t flags() const {
+            return (move >> 20) & 15u;
+        }
 
+        void promote(uint8_t piece) {
+            move |= (uint32_t(piece) << 16);
+        }
 
-    std::string to_string() const {
-            auto square_to_string = [](uint8_t sq) {
-                char file = 'a' + (sq % 8);
-                char rank = '8' - (sq / 8);
-                return std::string{file} + rank;
-            };
+        static std::string sq_to_str(uint8_t sq) {
+            char file = char('a' + (sq % 8));
+            char rank = char('8' - (sq / 8));  // a8=0 convention
+            std::string s;
+            s += file;
+            s += rank;
+            return s;
+        }
 
-            std::string result = square_to_string(from) + square_to_string(to);
+        std::string to_string() const {
+            std::string s = sq_to_str(from()) + sq_to_str(to());
 
-            if (promotion != EMPTY) {
-                char promoChar = 'q';
-                if (promotion == WHITE_ROOK || promotion == BLACK_ROOK) promoChar = 'r';
-                else if (promotion == WHITE_BISHOP || promotion == BLACK_BISHOP) promoChar = 'b';
-                else if (promotion == WHITE_KNIGHT || promotion == BLACK_KNIGHT) promoChar = 'n';
-
-                result += promoChar;
+            uint8_t promo = promotion();
+            if (promo != EMPTY) {
+                char c = 'q';
+                if (promo == WHITE_ROOK || promo == BLACK_ROOK) c = 'r';
+                else if (promo == WHITE_BISHOP || promo == BLACK_BISHOP) c = 'b';
+                else if (promo == WHITE_KNIGHT || promo == BLACK_KNIGHT) c = 'n';
+                // queens default to 'q'
+                s += c;
             }
 
-            return result;
+            return s;
         }
     };
 

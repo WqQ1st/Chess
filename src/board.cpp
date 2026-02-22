@@ -119,12 +119,12 @@ void ChessBoard::move(const Move& move) {
     stateStack[stackIndex] = stateStack[stackIndex - 1];
 
 
-    uint64_t fromBoard = uint64_t(1) << move.from;
-    uint64_t toBoard = uint64_t(1) << move.to;
+    uint64_t fromBoard = uint64_t(1) << move.from();
+    uint64_t toBoard = uint64_t(1) << move.to();
     uint64_t moveBoard = fromBoard | toBoard;
 
     //move a piece and store which type (ex: white pawn)
-    uint8_t movedPiece = move.piece;
+    uint8_t movedPiece = move.piece();
     stateStack[stackIndex].bitboards[movedPiece] ^= (fromBoard | toBoard);
 
     int capturedPiece = EMPTY;
@@ -148,8 +148,8 @@ void ChessBoard::move(const Move& move) {
     }
 
     //set en-passant target
-    if ((movedPiece == WHITE_PAWN || movedPiece == BLACK_PAWN) && abs(move.from - move.to) == 16) {
-        stateStack[stackIndex].passantTarget = uint64_t(1) << int((move.from + move.to) * 0.5);
+    if ((movedPiece == WHITE_PAWN || movedPiece == BLACK_PAWN) && abs(move.from() - move.to()) == 16) {
+        stateStack[stackIndex].passantTarget = uint64_t(1) << int((move.from() + move.to()) * 0.5);
     } else {
         stateStack[stackIndex].passantTarget = 0;
     }
@@ -219,9 +219,9 @@ void ChessBoard::move(const Move& move) {
 
 
     //promotions
-    if (move.promotion != EMPTY) {
+    if (move.promotion() != EMPTY) {
         stateStack[stackIndex].bitboards[stateStack[stackIndex].turn == WHITE ? WHITE_PAWN : BLACK_PAWN] ^= toBoard;
-        stateStack[stackIndex].bitboards[move.promotion] ^= toBoard;
+        stateStack[stackIndex].bitboards[move.promotion()] ^= toBoard;
     }
 
     //switch turns

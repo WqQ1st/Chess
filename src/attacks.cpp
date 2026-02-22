@@ -425,7 +425,7 @@ int is_square_attacked(int square, int side, const BoardState& state) {
 
     const uint64_t *bitboards = state.bitboards;
 
-    bool verbose = true;
+    bool verbose = false;
 
     //attacked by white pawns
     if ((side == WHITE) && pawn_attacks[BLACK][square] & bitboards[WHITE_PAWN]) {
