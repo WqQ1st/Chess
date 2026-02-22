@@ -311,7 +311,12 @@ static void mouseclick(double x, double y) {
     int click_y = floor((y - square_y) / square_size);
 
     if (promote_y == 0) {
+        
         //std::cout << "promoted" << std::endl;
+        // clicked outside the promotion column or outside the 4 choices
+        if (click_x != promote_x || click_y < 0 || click_y > 3) {
+            return;
+        }
         if (click_x == promote_x) {
             uint8_t promotion = EMPTY;
             if (click_y == 0) {
@@ -339,6 +344,10 @@ static void mouseclick(double x, double y) {
         }
     } else if (promote_y == 7) {
         //std::cout << "promoted" << std::endl;
+        // clicked outside the promotion column or outside the 4 choices
+        if (click_x != promote_x || click_y < 4 || click_y > 7) {
+            return;
+        }
         if (click_x == promote_x) {
             uint8_t promotion = EMPTY;
             if (click_y == 7) {
