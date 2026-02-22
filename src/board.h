@@ -117,7 +117,10 @@
         }
 
         void promote(uint8_t piece) {
-            move |= (uint32_t(piece) << 16);
+            // clear promo field (bits 16 to 19)
+            move &= ~(0xFu << 16);
+            // set promo field
+            move |= (uint32_t(piece) & 15u) << 16;
         }
 
         static std::string sq_to_str(uint8_t sq) {

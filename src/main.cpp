@@ -327,9 +327,14 @@ static void mouseclick(double x, double y) {
                 moveStack[moveIndex - 1].promote(promotion);
                 game.undo();
                 game.move(moveStack[moveIndex - 1]);
+                
+                select_x = -1;
+                select_y = -1;
 
                 promote_x = -1;
                 promote_y = -1;
+
+                return;
             }
         }
     } else if (promote_y == 7) {
@@ -350,8 +355,13 @@ static void mouseclick(double x, double y) {
                 game.undo();
                 game.move(moveStack[moveIndex - 1]);
 
+                select_x = -1;
+                select_y = -1;
+
                 promote_x = -1;
                 promote_y = -1;
+
+                return;
             }
         }
     }
