@@ -36,6 +36,16 @@ int select_y = -1;
 int promote_x = -1;
 int promote_y = -1;
 
+struct PendingMove {
+    uint8_t from;
+    uint8_t to;
+    uint8_t piece;
+    MoveFlag flags;
+    bool active = false;
+};
+
+PendingMove pending;
+
 //stack of previous moves
 Move moveStack[1000];
 int moveIndex = 0;
@@ -299,11 +309,12 @@ static void mouseclick(double x, double y) {
     std::vector<Move> moves;
     generate_moves(game.curr_state(), moves);
 
-    
-    //std::cout << "all moves for " << int(game.curr_state().turn) << ": " << std::endl;
+    /*
+    std::cout << "all moves for " << int(game.curr_state().turn) << ": " << std::endl;
     for (const auto& m : moves) {
-        //std::cout << m.to_string() << "\n";
+        std::cout << m.to_string() << "\n";
     }
+    */
     //std::cout << "clicked on (" << x << ", " << y << ")" << std::endl;
     
 
@@ -328,10 +339,12 @@ static void mouseclick(double x, double y) {
             } else if (click_y == 3) {
                 promotion = WHITE_KNIGHT;
             }
-            if (promotion != EMPTY) {
-                moveStack[moveIndex - 1].promote(promotion);
-                game.undo();
-                game.move(moveStack[moveIndex - 1]);
+            if (promotion != EMPTY && pending.active) {
+                Move m(pending.from, pending.to, pending.piece, promotion, pending.flags);
+                moveStack[moveIndex] = m;
+                game.move(moveStack[moveIndex++]);
+
+                pending.active = false;
                 
                 select_x = -1;
                 select_y = -1;
@@ -359,10 +372,12 @@ static void mouseclick(double x, double y) {
             } else if (click_y == 4) {
                 promotion = BLACK_KNIGHT;
             }
-            if (promotion != EMPTY) {
-                moveStack[moveIndex - 1].promote(promotion);
-                game.undo();
-                game.move(moveStack[moveIndex - 1]);
+            if (promotion != EMPTY && pending.active) {
+                Move m(pending.from, pending.to, pending.piece, promotion, pending.flags);
+                moveStack[moveIndex] = m;
+                game.move(moveStack[moveIndex++]);
+
+                pending.active = false;
 
                 select_x = -1;
                 select_y = -1;
@@ -392,23 +407,34 @@ static void mouseclick(double x, double y) {
         uint8_t piece = game.getPiece(from);
         uint8_t promoted = EMPTY;
         MoveFlag flags = MF_NONE;
+
         if (game.getPiece(to) != EMPTY) {
             flags = MoveFlag(flags | MF_CAPTURE);
         }
 
         Move move(from, to, piece, promoted, flags);
 
-        moveStack[moveIndex] = move;
-        game.move(moveStack[moveIndex++]);
-
         //check to see if pawn promoted
-        if (click_y == 7 && game.getPiece(to) == BLACK_PAWN || click_y == 0 && game.getPiece(to) == WHITE_PAWN) {
+        if ((piece == WHITE_PAWN && click_y == 0) || (piece == BLACK_PAWN && click_y == 7)) {
+            pending.from = from;
+            pending.to = to;
+            pending.piece = piece;
+            pending.flags = flags;
+            pending.active = true;
+
             promote_x = click_x;
             promote_y = click_y;
+
+            // clear selection so highlight goes away
+            select_x = select_y = -1;
+            return;
         } else {
             promote_x = -1;
             promote_y = -1;
         }
+
+        moveStack[moveIndex] = move;
+        game.move(moveStack[moveIndex++]);
 
         select_x = -1;
         select_y = -1;

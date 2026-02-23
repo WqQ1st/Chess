@@ -112,12 +112,14 @@ void ChessBoard::setPiece(uint8_t piece, uint8_t square) {
     stateStack[stackIndex].bitboards[piece] |= mask;
 }
 
+//make move on board
 void ChessBoard::move(const Move& move) {
+
+
 
     //push a new state onto the stack
     stackIndex++;
     stateStack[stackIndex] = stateStack[stackIndex - 1];
-
 
     uint64_t fromBoard = uint64_t(1) << move.from();
     uint64_t toBoard = uint64_t(1) << move.to();
