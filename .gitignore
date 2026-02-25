@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+*.dSYM/
+
+# VSCode
+.vscode/
+
+# Build output
+chess
+*.out
+*.exe
+build/
