@@ -80,7 +80,7 @@ void generate_moves(const BoardState& state, std::vector<Move>& moves) {
                     }
 
                     //generate en passant squares
-                    if (state.passantTarget != EMPTY) {
+                    if (state.passantTarget) {
                         //lookup pawn attacks and bitwise AND with en passant square (bit)
                         uint64_t passant_attacks = pawn_attacks[side][source_square] & (1ULL << state.passantTarget);
 
@@ -170,7 +170,7 @@ void generate_moves(const BoardState& state, std::vector<Move>& moves) {
                     }
 
                     //generate en passant squares
-                    if (state.passantTarget != EMPTY) {
+                    if (state.passantTarget) {
                         //lookup pawn attacks and bitwise AND with en passant square (bit)
                         uint64_t passant_attacks = pawn_attacks[side][source_square] & (1ULL << state.passantTarget);
 

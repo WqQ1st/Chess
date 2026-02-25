@@ -211,6 +211,9 @@
             void move(const Move& move);
             void undo();
 
+            //try move
+            bool try_move(const Move& move);
+
             BoardState& curr_state();
 
         //constructor

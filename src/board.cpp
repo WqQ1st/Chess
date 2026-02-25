@@ -115,7 +115,7 @@ void ChessBoard::setPiece(uint8_t piece, uint8_t square) {
 //make move on board
 void ChessBoard::move(const Move& move) {
 
-
+    //distinguish btwn quiet and capture moves
 
     //push a new state onto the stack
     stackIndex++;
@@ -127,33 +127,36 @@ void ChessBoard::move(const Move& move) {
 
     //move a piece and store which type (ex: white pawn)
     uint8_t movedPiece = move.piece();
-    stateStack[stackIndex].bitboards[movedPiece] ^= (fromBoard | toBoard);
+
+    auto& st = stateStack[stackIndex];
+
+    st.bitboards[movedPiece] ^= (fromBoard | toBoard);
 
     int capturedPiece = EMPTY;
 
     //capture a piece
-    for (int i = stateStack[stackIndex].turn == WHITE ? 6 : 0; i < (stateStack[stackIndex].turn == WHITE ? 11 : 5); ++i) {
-        if (stateStack[stackIndex].bitboards[i] & toBoard) {
-            stateStack[stackIndex].bitboards[i] ^= toBoard;
+    for (int i = st.turn == WHITE ? 6 : 0; i < (st.turn == WHITE ? 11 : 5); ++i) {
+        if (st.bitboards[i] & toBoard) {
+            st.bitboards[i] ^= toBoard;
             capturedPiece = i;
             break;
         }
     }
 
     //en-passant
-    if (toBoard == stateStack[stackIndex].passantTarget) {
+    if (toBoard == st.passantTarget) {
         if (movedPiece == WHITE_PAWN) {
-            stateStack[stackIndex].bitboards[BLACK_PAWN] ^= stateStack[stackIndex].passantTarget << 8;
+            st.bitboards[BLACK_PAWN] ^= st.passantTarget << 8;
         } else if (movedPiece == BLACK_PAWN) {
-            stateStack[stackIndex].bitboards[WHITE_PAWN] ^= stateStack[stackIndex].passantTarget >> 8;
+            st.bitboards[WHITE_PAWN] ^= st.passantTarget >> 8;
         }
     }
 
     //set en-passant target
     if ((movedPiece == WHITE_PAWN || movedPiece == BLACK_PAWN) && abs(move.from() - move.to()) == 16) {
-        stateStack[stackIndex].passantTarget = uint64_t(1) << int((move.from() + move.to()) * 0.5);
+        st.passantTarget = uint64_t(1) << int((move.from() + move.to()) * 0.5);
     } else {
-        stateStack[stackIndex].passantTarget = 0;
+        st.passantTarget = 0;
     }
 
     //castling
@@ -174,21 +177,16 @@ void ChessBoard::move(const Move& move) {
     }
     */
 
-    auto& st = stateStack[stackIndex];
+    
 
-    // castle move: king moved two squares, so move rook too
-    if (movedPiece == WHITE_KING) {
-        if (moveBoard == (BB(E1) | BB(G1)) && (st.castle & wk)) {          // white king side
-            st.bitboards[WHITE_ROOK] ^= (BB(H1) | BB(F1));
-        } else if (moveBoard == (BB(E1) | BB(C1)) && (st.castle & wq)) {   // white queen side
-            st.bitboards[WHITE_ROOK] ^= (BB(A1) | BB(D1));
-        }
-    }
-    else if (movedPiece == BLACK_KING) {
-        if (moveBoard == (BB(E8) | BB(G8)) && (st.castle & bk)) {          // black king side
-            st.bitboards[BLACK_ROOK] ^= (BB(H8) | BB(F8));
-        } else if (moveBoard == (BB(E8) | BB(C8)) && (st.castle & bq)) {   // black queen side
-            st.bitboards[BLACK_ROOK] ^= (BB(A8) | BB(D8));
+    // castle move: king moved two squares, so move rook too; generate moves alr checks legality of castling
+    if (move.flags() & MF_CASTLE) {
+        if (movedPiece == WHITE_KING) {
+            if (move.to() == G1) st.bitboards[WHITE_ROOK] ^= (BB(H1) | BB(F1));
+            else if (move.to() == C1) st.bitboards[WHITE_ROOK] ^= (BB(A1) | BB(D1));
+        } else if (movedPiece == BLACK_KING) {
+            if (move.to() == G8) st.bitboards[BLACK_ROOK] ^= (BB(H8) | BB(F8));
+            else if (move.to() == C8) st.bitboards[BLACK_ROOK] ^= (BB(A8) | BB(D8));
         }
     }
 
@@ -222,24 +220,53 @@ void ChessBoard::move(const Move& move) {
 
     //promotions
     if (move.promotion() != EMPTY) {
-        stateStack[stackIndex].bitboards[stateStack[stackIndex].turn == WHITE ? WHITE_PAWN : BLACK_PAWN] ^= toBoard;
-        stateStack[stackIndex].bitboards[move.promotion()] ^= toBoard;
+        st.bitboards[movedPiece] ^= toBoard;          // remove pawn that just landed
+        st.bitboards[move.promotion()] ^= toBoard;    // add promoted piece
     }
 
     //switch turns
-    if (stateStack[stackIndex].turn == WHITE) {
-        stateStack[stackIndex].turn = BLACK;
+    if (st.turn == WHITE) {
+        st.turn = BLACK;
     } else {
-        stateStack[stackIndex].turn = WHITE;
+        st.turn = WHITE;
     }
 
-    stateStack[stackIndex].update_occupancies();
+    st.update_occupancies();
 }
 
 void ChessBoard::undo() {
     if (stackIndex > 0) {
         --stackIndex;
     }
+}
+
+//returns true and applies the move if legal, otherwise returns false
+bool ChessBoard::try_move(const Move& m) {
+    // side that is about to move
+    int us = curr_state().turn;
+    int them = (us == WHITE) ? BLACK : WHITE;
+
+    move(m); // flips turn internally
+
+    // find our king square in the NEW state
+    const BoardState& st = curr_state();
+    uint64_t kingBB = st.bitboards[(us == WHITE) ? WHITE_KING : BLACK_KING];
+
+    // should never happen, but be defensive
+    if (!kingBB) {
+        undo();
+        return false;
+    }
+
+    int kingSq = __builtin_ctzll(kingBB); // takes lsb since exactly 1 king bit should be set
+
+    // if opponent attacks our king, illegal
+    if (is_square_attacked(kingSq, them, st)) {
+        undo();
+        return false;
+    }
+
+    return true;
 }
 
 //parse FEN string
