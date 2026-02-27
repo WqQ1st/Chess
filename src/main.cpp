@@ -14,7 +14,10 @@ using std::uint8_t;
 using std::uint64_t;
 
 //Game state
-ChessBoard game = ChessBoard(tricky_position);
+ChessBoard game = ChessBoard(start_position);
+
+//updates legal moves
+static void refresh_legal();
 
 int width = 640;
 int height = 480;
@@ -40,7 +43,7 @@ struct PendingMove {
     uint8_t from;
     uint8_t to;
     uint8_t piece;
-    MoveFlag flags;
+    uint8_t flags;
     bool active = false;
 };
 
@@ -51,6 +54,8 @@ Move moveStack[1000];
 int moveIndex = 0;
 
 GLFWwindow* window;
+
+std::vector<Move> legal;
 
 static void drawPiece(int x, int y, int size, int piece) {
 	glBegin(GL_POLYGON);
@@ -225,7 +230,23 @@ static void draw() {
 
     //show legal moves
     if (select_x < 8 && select_x >= 0 && select_y < 8 && select_y >= 0) {
-        //use attack tables to highlight all legal moves
+        uint8_t from = select_x + 8 * select_y;
+        //highlight legal moves
+        for (const Move& m : legal) {
+            if (m.from() == from) {
+                uint8_t highlight_sq = m.to();
+                int x = highlight_sq % 8;
+                int y = highlight_sq / 8;
+                //highlight the "to" square
+                glColor3f(0, 1, 1);
+                glBegin(GL_QUADS);
+                glVertex2f(square_x + square_size * x, square_y + square_size * y);
+                glVertex2f(square_x + square_size * x, square_y + square_size * (y + 1));
+                glVertex2f(square_x + square_size * (x + 1), square_y + square_size * (y + 1));
+                glVertex2f(square_x + square_size * (x + 1), square_y + square_size * y);
+                glEnd();
+            }
+        }
     }
 
     //show prev move
@@ -305,10 +326,7 @@ static void draw() {
 }
 
 
-static void mouseclick(double x, double y) {
-    std::vector<Move> moves;
-    generate_moves(game.curr_state(), moves);
-
+static void mouseclick(double x, double y) { //handles mouse click
     /*
     std::cout << "all moves for " << int(game.curr_state().turn) << ": " << std::endl;
     for (const auto& m : moves) {
@@ -321,8 +339,8 @@ static void mouseclick(double x, double y) {
     int click_x = floor((x - square_x) / square_size);
     int click_y = floor((y - square_y) / square_size);
 
+    //if white pawn promoted last move and promotion piece needs to be decided
     if (promote_y == 0) {
-        
         //std::cout << "promoted" << std::endl;
         // clicked outside the promotion column or outside the 4 choices
         if (click_x != promote_x || click_y < 0 || click_y > 3) {
@@ -343,6 +361,8 @@ static void mouseclick(double x, double y) {
                 Move m(pending.from, pending.to, pending.piece, promotion, pending.flags);
                 moveStack[moveIndex] = m;
                 game.move(moveStack[moveIndex++]);
+                refresh_legal();
+                
 
                 pending.active = false;
                 
@@ -355,7 +375,7 @@ static void mouseclick(double x, double y) {
                 return;
             }
         }
-    } else if (promote_y == 7) {
+    } else if (promote_y == 7) { //if black pawn promoted and promotion piece needs to be decided
         //std::cout << "promoted" << std::endl;
         // clicked outside the promotion column or outside the 4 choices
         if (click_x != promote_x || click_y < 4 || click_y > 7) {
@@ -376,6 +396,7 @@ static void mouseclick(double x, double y) {
                 Move m(pending.from, pending.to, pending.piece, promotion, pending.flags);
                 moveStack[moveIndex] = m;
                 game.move(moveStack[moveIndex++]);
+                refresh_legal();
 
                 pending.active = false;
 
@@ -396,6 +417,23 @@ static void mouseclick(double x, double y) {
         return;
     }
 
+    //clicked on a piece of ur own color
+    int click_sq = click_x + click_y * 8;
+    //clicked on a piece of ur own color
+    if (game.getPiece(click_sq) != EMPTY && (game.curr_state().turn == WHITE ? game.getPiece(click_sq) <= WHITE_KING : game.getPiece(click_sq) >= BLACK_PAWN)) {
+        select_x = click_x;
+        select_y = click_y;
+        return;
+    }
+
+    int prev_sq = select_x + select_y * 8;
+    //previous selected piece was opposite color
+    if (game.getPiece(prev_sq) != EMPTY && (game.curr_state().turn == BLACK ? game.getPiece(prev_sq) <= WHITE_KING : game.getPiece(prev_sq) >= BLACK_PAWN)) {
+        select_x = click_x;
+        select_y = click_y;
+        return;
+    }
+
     //otherwise, if piece is selected, move it (if possible)
     else if (select_x < 8 && select_x >= 0 && select_y < 8 && select_y >= 0 && game.getPiece(select_x + 8 * select_y) != EMPTY) {
         if (click_x < 0 || click_x >= 8 || click_y < 0 || click_y >= 8) {
@@ -404,7 +442,23 @@ static void mouseclick(double x, double y) {
 
         uint8_t from = select_x + 8 * select_y;
         uint8_t to = click_x + 8 * click_y;
-        uint8_t piece = game.getPiece(from);
+
+        Move move;
+        
+        bool is_legal = false;
+        for (const Move& m : legal) {
+            if (m.to() == to && m.from() == from) {
+                is_legal = true;
+                move = m;
+                break;
+            }
+        }
+        if (!is_legal) { //move is not legal
+            select_x = select_y = -1;
+            return;
+        }
+
+        /*
         uint8_t promoted = EMPTY;
         MoveFlag flags = MF_NONE;
 
@@ -412,14 +466,16 @@ static void mouseclick(double x, double y) {
             flags = MoveFlag(flags | MF_CAPTURE);
         }
 
-        Move move(from, to, piece, promoted, flags);
+        //Move move(from, to, piece, promoted, flags);
+        */
+        
 
         //check to see if pawn promoted
-        if ((piece == WHITE_PAWN && click_y == 0) || (piece == BLACK_PAWN && click_y == 7)) {
-            pending.from = from;
-            pending.to = to;
-            pending.piece = piece;
-            pending.flags = flags;
+        if ((move.piece() == WHITE_PAWN && click_y == 0) || (move.piece() == BLACK_PAWN && click_y == 7)) {
+            pending.from = move.from();
+            pending.to = move.to();
+            pending.piece = move.piece();
+            pending.flags = move.flags();
             pending.active = true;
 
             promote_x = click_x;
@@ -435,6 +491,7 @@ static void mouseclick(double x, double y) {
 
         moveStack[moveIndex] = move;
         game.move(moveStack[moveIndex++]);
+        refresh_legal();
 
         select_x = -1;
         select_y = -1;
@@ -453,6 +510,7 @@ static void keydown(int key) {
     } else if (key == GLFW_KEY_Z && moveIndex > 0) {
         game.undo();
         --moveIndex;
+        refresh_legal();
     }
 }
 
@@ -527,8 +585,24 @@ void init_all() {
     init_sliders_attacks(false);
 }
 
+//recalculate legal moves
+static void refresh_legal() {
+    legal.clear();
+    std::vector<Move> pseudo;
+    generate_moves(game.curr_state(), pseudo); //populates pseudo w/ legal moves
+
+    for (const Move& m : pseudo) {
+        if (game.try_move(m)) {
+            legal.push_back(m);
+            game.undo();
+        }
+    }
+}
+
 int main() {
     init_all();
+
+    refresh_legal();
 
     /*//testing using prints
     for (int i = 7; i < 20; ++i) {

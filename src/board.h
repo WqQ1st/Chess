@@ -88,7 +88,7 @@
 
         uint32_t move = 0;
 
-        Move(uint8_t source, uint8_t target, uint8_t piece, uint8_t promoted, MoveFlag flags) {
+        Move(uint8_t source, uint8_t target, uint8_t piece, uint8_t promoted, uint8_t flags) {
             move = uint32_t(source)|(uint32_t(target) << 6)|(uint32_t(piece) << 12)|(uint32_t(promoted) << 16)|(uint32_t(flags) << 20);
         }
 
@@ -211,7 +211,7 @@
             void move(const Move& move);
             void undo();
 
-            //try move
+            //try move, if succeeds, move is played (not undone)
             bool try_move(const Move& move);
 
             BoardState& curr_state();
