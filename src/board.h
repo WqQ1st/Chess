@@ -17,6 +17,7 @@
     #include <cstdint>
     #include "square.h"
     #include <string>
+    #include <vector>
 
     enum Piece {
         WHITE_PAWN = 0,
@@ -200,6 +201,9 @@
             void print_bitboard(uint64_t bitboard);
             void print_bitboard();
             void print_occupancy();
+
+            //generates legal moves and fills out them
+            void generate_legal_moves(std::vector<Move>& out);
 
             BoardState parse_fen(const char *fen);
 

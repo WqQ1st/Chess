@@ -1,6 +1,8 @@
 #include "movegen.h"
 
-void generate_moves(const BoardState& state, std::vector<Move>& moves) {
+//generates all pseudo legal moves
+void generate_moves(const BoardState& state, std::vector<Move>& moves, GenMode mode) {
+    moves.clear(); //clears the moves vector before adding all psuedo legal moves
     /*
     std::cout
     << "turn=" << int(state.turn)
@@ -40,25 +42,28 @@ void generate_moves(const BoardState& state, std::vector<Move>& moves) {
                     //init target square
                     target_square = source_square - 8;
 
-                    //generate quiet pawn moves
-                    if ((target_square >= 0) && !get_bit(state.occupancies[BOTH], target_square)) { //if the target is on the board
-                        //pawn promotion
-                        if (source_square >= A7 && source_square <= H7) {
-                            //add moves into move list
-                            moves.push_back(Move(source_square, target_square, piece, WHITE_QUEEN, MF_NONE));
-                            moves.push_back(Move(source_square, target_square, piece, WHITE_BISHOP, MF_NONE));
-                            moves.push_back(Move(source_square, target_square, piece, WHITE_KNIGHT, MF_NONE));
-                            moves.push_back(Move(source_square, target_square, piece, WHITE_ROOK, MF_NONE));
-                        } else {
-                            //pawn push
-                            moves.push_back(Move(source_square, target_square, piece, EMPTY, MF_NONE));
-                            //double pawn push
-                            if ((source_square >= A2 && source_square <= H2) && !get_bit(state.occupancies[BOTH], target_square - 8)) {
-                                //add to move list
-                                moves.push_back(Move(source_square, target_square - 8, piece, EMPTY, MF_DOUBLE));
+                    if (!(mode == GenMode::CapturesOnly)) {
+                        //generate quiet pawn moves
+                        if ((target_square >= 0) && !get_bit(state.occupancies[BOTH], target_square)) { //if the target is on the board
+                            //pawn promotion
+                            if (source_square >= A7 && source_square <= H7) {
+                                //add moves into move list
+                                moves.push_back(Move(source_square, target_square, piece, WHITE_QUEEN, MF_NONE));
+                                moves.push_back(Move(source_square, target_square, piece, WHITE_BISHOP, MF_NONE));
+                                moves.push_back(Move(source_square, target_square, piece, WHITE_KNIGHT, MF_NONE));
+                                moves.push_back(Move(source_square, target_square, piece, WHITE_ROOK, MF_NONE));
+                            } else {
+                                //pawn push
+                                moves.push_back(Move(source_square, target_square, piece, EMPTY, MF_NONE));
+                                //double pawn push
+                                if ((source_square >= A2 && source_square <= H2) && !get_bit(state.occupancies[BOTH], target_square - 8)) {
+                                    //add to move list
+                                    moves.push_back(Move(source_square, target_square - 8, piece, EMPTY, MF_DOUBLE));
+                                }
                             }
                         }
                     }
+                    
                     //init pawn attacks bitboard
                     attacks = pawn_attacks[side][source_square] & state.occupancies[BLACK];
 
@@ -82,39 +87,41 @@ void generate_moves(const BoardState& state, std::vector<Move>& moves) {
                     //generate en passant squares
                     if (state.passantTarget) {
                         //lookup pawn attacks and bitwise AND with en passant square (bit)
-                        uint64_t passant_attacks = pawn_attacks[side][source_square] & (1ULL << state.passantTarget);
+                        uint64_t passant_attacks = pawn_attacks[side][source_square] & state.passantTarget;
 
                         //make sure en passant capture available
                         if (passant_attacks) {
                             //init en passant square
                             int target_enpassant = pop_lsb(passant_attacks);
-                            moves.push_back(Move(source_square, target_enpassant, piece, EMPTY, MF_ENPASSANT));
+                            moves.push_back(Move(source_square, target_enpassant, piece, EMPTY, MF_ENPASSANT | MF_CAPTURE));
                         }
                     }
                 }
             }
 
             //castling
-            if (piece == WHITE_KING) {
-                //king side castling available
-                if (state.castle & wk) {
-                    //make sure squares between king and king's rook are empty
-                    if (!get_bit(state.occupancies[BOTH], F1) && !get_bit(state.occupancies[BOTH], G1)) {
-                        //make sure king and F1 squares aren't under attack
-                        if (!is_square_attacked(E1, BLACK, state) && !is_square_attacked(F1, BLACK, state)) {
-                            //king side castle
-                            moves.push_back(Move(E1, G1, piece, EMPTY, MF_CASTLE));
+            if (!(mode == GenMode::CapturesOnly)) {
+                if (piece == WHITE_KING) {
+                    //king side castling available
+                    if (state.castle & wk) {
+                        //make sure squares between king and king's rook are empty
+                        if (!get_bit(state.occupancies[BOTH], F1) && !get_bit(state.occupancies[BOTH], G1)) {
+                            //make sure king and F1 squares aren't under attack
+                            if (!is_square_attacked(E1, BLACK, state) && !is_square_attacked(F1, BLACK, state)) {
+                                //king side castle
+                                moves.push_back(Move(E1, G1, piece, EMPTY, MF_CASTLE));
+                            }
                         }
                     }
-                }
-                //queen side castling available
-                if (state.castle & wq) {
-                    //make sure squares between king and queen's rook are empty
-                    if (!get_bit(state.occupancies[BOTH], D1) && !get_bit(state.occupancies[BOTH], C1) && !get_bit(state.occupancies[BOTH], B1)) {
-                        //make sure king and D1 squares aren't under attack
-                        if (!is_square_attacked(E1, BLACK, state) && !is_square_attacked(D1, BLACK, state)) {
-                            //queen side castle
-                            moves.push_back(Move(E1, C1, piece, EMPTY, MF_CASTLE));
+                    //queen side castling available
+                    if (state.castle & wq) {
+                        //make sure squares between king and queen's rook are empty
+                        if (!get_bit(state.occupancies[BOTH], D1) && !get_bit(state.occupancies[BOTH], C1) && !get_bit(state.occupancies[BOTH], B1)) {
+                            //make sure king and D1 squares aren't under attack
+                            if (!is_square_attacked(E1, BLACK, state) && !is_square_attacked(D1, BLACK, state)) {
+                                //queen side castle
+                                moves.push_back(Move(E1, C1, piece, EMPTY, MF_CASTLE));
+                            }
                         }
                     }
                 }
@@ -131,21 +138,23 @@ void generate_moves(const BoardState& state, std::vector<Move>& moves) {
                     target_square = source_square + 8;
 
                     //generate quiet pawn moves
-                    if ((target_square < 64) && !get_bit(state.occupancies[BOTH], target_square)) { //if the target is on the board
-                        //pawn promotion
-                        if (source_square >= A2 && source_square <= H2) {
-                            //add moves into move list
-                            moves.push_back(Move(source_square, target_square, piece, BLACK_QUEEN, MF_NONE));
-                            moves.push_back(Move(source_square, target_square, piece, BLACK_BISHOP, MF_NONE));
-                            moves.push_back(Move(source_square, target_square, piece, BLACK_KNIGHT, MF_NONE));
-                            moves.push_back(Move(source_square, target_square, piece, BLACK_ROOK, MF_NONE));
-                        } else {
-                            //pawn push
-                            moves.push_back(Move(source_square, target_square, piece, EMPTY, MF_NONE));
-                            //double pawn push
-                            if ((source_square >= A7 && source_square <= H7) && !get_bit(state.occupancies[BOTH], target_square + 8)) {
-                                //add to move list
-                                moves.push_back(Move(source_square, target_square + 8, piece, EMPTY, MF_DOUBLE));
+                    if (!(mode == GenMode::CapturesOnly)) {
+                        if ((target_square < 64) && !get_bit(state.occupancies[BOTH], target_square)) { //if the target is on the board
+                            //pawn promotion
+                            if (source_square >= A2 && source_square <= H2) {
+                                //add moves into move list
+                                moves.push_back(Move(source_square, target_square, piece, BLACK_QUEEN, MF_NONE));
+                                moves.push_back(Move(source_square, target_square, piece, BLACK_BISHOP, MF_NONE));
+                                moves.push_back(Move(source_square, target_square, piece, BLACK_KNIGHT, MF_NONE));
+                                moves.push_back(Move(source_square, target_square, piece, BLACK_ROOK, MF_NONE));
+                            } else {
+                                //pawn push
+                                moves.push_back(Move(source_square, target_square, piece, EMPTY, MF_NONE));
+                                //double pawn push
+                                if ((source_square >= A7 && source_square <= H7) && !get_bit(state.occupancies[BOTH], target_square + 8)) {
+                                    //add to move list
+                                    moves.push_back(Move(source_square, target_square + 8, piece, EMPTY, MF_DOUBLE));
+                                }
                             }
                         }
                     }
@@ -172,39 +181,41 @@ void generate_moves(const BoardState& state, std::vector<Move>& moves) {
                     //generate en passant squares
                     if (state.passantTarget) {
                         //lookup pawn attacks and bitwise AND with en passant square (bit)
-                        uint64_t passant_attacks = pawn_attacks[side][source_square] & (1ULL << state.passantTarget);
+                        uint64_t passant_attacks = pawn_attacks[side][source_square] & state.passantTarget;
 
                         //make sure en passant capture available
                         if (passant_attacks) {
                             //init en passant square
                             int target_enpassant = pop_lsb(passant_attacks);
-                            moves.push_back(Move(source_square, target_enpassant, piece, EMPTY, MF_ENPASSANT));
+                            moves.push_back(Move(source_square, target_enpassant, piece, EMPTY, MF_ENPASSANT | MF_CAPTURE));
                         }
                     }
                 }
             }
 
             //castling
-            if (piece == BLACK_KING) {
-                //king side castling available
-                if (state.castle & bk) {
-                    //make sure squares between king and king's rook are empty
-                    if (!get_bit(state.occupancies[BOTH], F8) && !get_bit(state.occupancies[BOTH], G8)) {
-                        //make sure king and F8 squares aren't under attack
-                        if (!is_square_attacked(E8, WHITE, state) && !is_square_attacked(F8, WHITE, state)) {
-                            //king side castle
-                            moves.push_back(Move(E8, G8, piece, EMPTY, MF_CASTLE));
+            if (!(mode == GenMode::CapturesOnly)) {
+                if (piece == BLACK_KING) {
+                    //king side castling available
+                    if (state.castle & bk) {
+                        //make sure squares between king and king's rook are empty
+                        if (!get_bit(state.occupancies[BOTH], F8) && !get_bit(state.occupancies[BOTH], G8)) {
+                            //make sure king and F8 squares aren't under attack
+                            if (!is_square_attacked(E8, WHITE, state) && !is_square_attacked(F8, WHITE, state)) {
+                                //king side castle
+                                moves.push_back(Move(E8, G8, piece, EMPTY, MF_CASTLE));
+                            }
                         }
                     }
-                }
-                //queen side castling available
-                if (state.castle & bq) {
-                    //make sure squares between king and queen's rook are empty
-                    if (!get_bit(state.occupancies[BOTH], D8) && !get_bit(state.occupancies[BOTH], C8) && !get_bit(state.occupancies[BOTH], B8)) {
-                        //make sure king and D8 squares aren't under attack
-                        if (!is_square_attacked(E8, WHITE, state) && !is_square_attacked(D8, WHITE, state)) {
-                            //queen side castle
-                            moves.push_back(Move(E8, C8, piece, EMPTY, MF_CASTLE));
+                    //queen side castling available
+                    if (state.castle & bq) {
+                        //make sure squares between king and queen's rook are empty
+                        if (!get_bit(state.occupancies[BOTH], D8) && !get_bit(state.occupancies[BOTH], C8) && !get_bit(state.occupancies[BOTH], B8)) {
+                            //make sure king and D8 squares aren't under attack
+                            if (!is_square_attacked(E8, WHITE, state) && !is_square_attacked(D8, WHITE, state)) {
+                                //queen side castle
+                                moves.push_back(Move(E8, C8, piece, EMPTY, MF_CASTLE));
+                            }
                         }
                     }
                 }
@@ -228,7 +239,9 @@ void generate_moves(const BoardState& state, std::vector<Move>& moves) {
 
                     //quiet moves
                     if (!get_bit(((state.turn == WHITE) ? state.occupancies[BLACK] : state.occupancies[WHITE]), target_square)){
-                        moves.push_back(Move(source_square, target_square, piece, EMPTY, MF_NONE));
+                        if (!(mode == GenMode::CapturesOnly)) {
+                            moves.push_back(Move(source_square, target_square, piece, EMPTY, MF_NONE));
+                        }
                     } else { //capture moves
                         moves.push_back(Move(source_square, target_square, piece, EMPTY, MF_CAPTURE));
                     }
@@ -253,7 +266,9 @@ void generate_moves(const BoardState& state, std::vector<Move>& moves) {
 
                     //quiet moves
                     if (!get_bit(((state.turn == WHITE) ? state.occupancies[BLACK] : state.occupancies[WHITE]), target_square)){
-                        moves.push_back(Move(source_square, target_square, piece, EMPTY, MF_NONE));
+                        if (!(mode == GenMode::CapturesOnly)) {
+                            moves.push_back(Move(source_square, target_square, piece, EMPTY, MF_NONE));
+                        }
                     } else { //capture moves
                         moves.push_back(Move(source_square, target_square, piece, EMPTY, MF_CAPTURE));
                     }
@@ -278,7 +293,9 @@ void generate_moves(const BoardState& state, std::vector<Move>& moves) {
 
                     //quiet moves
                     if (!get_bit(((state.turn == WHITE) ? state.occupancies[BLACK] : state.occupancies[WHITE]), target_square)){
-                        moves.push_back(Move(source_square, target_square, piece, EMPTY, MF_NONE));
+                        if (!(mode == GenMode::CapturesOnly)) {
+                            moves.push_back(Move(source_square, target_square, piece, EMPTY, MF_NONE));
+                        }
                     } else { //capture moves
                         moves.push_back(Move(source_square, target_square, piece, EMPTY, MF_CAPTURE));
                     }
@@ -303,7 +320,9 @@ void generate_moves(const BoardState& state, std::vector<Move>& moves) {
 
                     //quiet moves
                     if (!get_bit(((state.turn == WHITE) ? state.occupancies[BLACK] : state.occupancies[WHITE]), target_square)){
-                        moves.push_back(Move(source_square, target_square, piece, EMPTY, MF_NONE));
+                        if (!(mode == GenMode::CapturesOnly)) {
+                            moves.push_back(Move(source_square, target_square, piece, EMPTY, MF_NONE));
+                        }
                     } else { //capture moves
                         moves.push_back(Move(source_square, target_square, piece, EMPTY, MF_CAPTURE));
                     }
@@ -328,7 +347,9 @@ void generate_moves(const BoardState& state, std::vector<Move>& moves) {
 
                     //quiet moves
                     if (!get_bit(((state.turn == WHITE) ? state.occupancies[BLACK] : state.occupancies[WHITE]), target_square)){
-                        moves.push_back(Move(source_square, target_square, piece, EMPTY, MF_NONE));
+                        if (!(mode == GenMode::CapturesOnly)) {
+                            moves.push_back(Move(source_square, target_square, piece, EMPTY, MF_NONE));
+                        }
                     } else { //capture moves
                         moves.push_back(Move(source_square, target_square, piece, EMPTY, MF_CAPTURE));
                     }

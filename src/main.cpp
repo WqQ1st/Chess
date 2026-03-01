@@ -16,9 +16,6 @@ using std::uint64_t;
 //Game state
 ChessBoard game = ChessBoard(start_position);
 
-//updates legal moves
-static void refresh_legal();
-
 int width = 640;
 int height = 480;
 
@@ -387,7 +384,7 @@ static void mouseclick(double x, double y) { //handles mouse click
                 Move m(pending.from, pending.to, pending.piece, promotion, pending.flags);
                 moveStack[moveIndex] = m;
                 game.move(moveStack[moveIndex++]);
-                refresh_legal();
+                game.generate_legal_moves(legal);
                 
 
                 pending.active = false;
@@ -422,7 +419,7 @@ static void mouseclick(double x, double y) { //handles mouse click
                 Move m(pending.from, pending.to, pending.piece, promotion, pending.flags);
                 moveStack[moveIndex] = m;
                 game.move(moveStack[moveIndex++]);
-                refresh_legal();
+                game.generate_legal_moves(legal);
 
                 pending.active = false;
 
@@ -452,16 +449,19 @@ static void mouseclick(double x, double y) { //handles mouse click
         return;
     }
 
-    int prev_sq = select_x + select_y * 8;
-    //previous selected piece was opposite color
-    if (game.getPiece(prev_sq) != EMPTY && (game.curr_state().turn == BLACK ? game.getPiece(prev_sq) <= WHITE_KING : game.getPiece(prev_sq) >= BLACK_PAWN)) {
-        select_x = click_x;
-        select_y = click_y;
-        return;
+    if (select_x != -1 && select_y != -1) {
+        int prev_sq = select_x + select_y * 8;
+        //previous selected piece was opposite color
+        if (game.getPiece(prev_sq) != EMPTY && (game.curr_state().turn == BLACK ? game.getPiece(prev_sq) <= WHITE_KING : game.getPiece(prev_sq) >= BLACK_PAWN)) {
+            select_x = click_x;
+            select_y = click_y;
+            return;
+        }
     }
+    
 
-    //otherwise, if piece is selected, move it (if possible)
-    else if (select_x < 8 && select_x >= 0 && select_y < 8 && select_y >= 0 && game.getPiece(select_x + 8 * select_y) != EMPTY) {
+    //if piece is selected, move it (if possible)
+    if (select_x < 8 && select_x >= 0 && select_y < 8 && select_y >= 0 && game.getPiece(select_x + 8 * select_y) != EMPTY) {
         if (click_x < 0 || click_x >= 8 || click_y < 0 || click_y >= 8) {
             return; //click is not on the board
         }
@@ -517,7 +517,7 @@ static void mouseclick(double x, double y) { //handles mouse click
 
         moveStack[moveIndex] = move;
         game.move(moveStack[moveIndex++]);
-        refresh_legal();
+        game.generate_legal_moves(legal);
 
         select_x = -1;
         select_y = -1;
@@ -536,7 +536,7 @@ static void keydown(int key) {
     } else if (key == GLFW_KEY_Z && moveIndex > 0) {
         game.undo();
         --moveIndex;
-        refresh_legal();
+        game.generate_legal_moves(legal);
     }
 }
 
@@ -611,24 +611,10 @@ void init_all() {
     init_sliders_attacks(false);
 }
 
-//recalculate legal moves
-static void refresh_legal() {
-    legal.clear();
-    std::vector<Move> pseudo;
-    generate_moves(game.curr_state(), pseudo); //populates pseudo w/ legal moves
-
-    for (const Move& m : pseudo) {
-        if (game.try_move(m)) {
-            legal.push_back(m);
-            game.undo();
-        }
-    }
-}
-
 int main() {
     init_all();
 
-    refresh_legal();
+    game.generate_legal_moves(legal);
 
     /*//testing using prints
     for (int i = 7; i < 20; ++i) {

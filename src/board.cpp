@@ -4,6 +4,7 @@
 #include <iostream>
 #include "bitboards.h"
 #include "square.h"
+#include "movegen.h"
 
 using std::uint8_t;
 using std::uint64_t;
@@ -123,7 +124,7 @@ void ChessBoard::move(const Move& move) {
 
     uint64_t fromBoard = uint64_t(1) << move.from();
     uint64_t toBoard = uint64_t(1) << move.to();
-    uint64_t moveBoard = fromBoard | toBoard;
+
 
     //move a piece and store which type (ex: white pawn)
     uint8_t movedPiece = move.piece();
@@ -281,6 +282,23 @@ uint8_t ChessBoard::king_square(int side) {
     return __builtin_ctzll(kingBB);
 }
 
+void ChessBoard::generate_legal_moves(std::vector<Move>& out) {
+    out.clear();
+
+    std::vector<Move> pseudo;
+
+    generate_moves(curr_state(), pseudo, GenMode::All); //populates pseudo w/ legal moves
+
+    for (const Move& m : pseudo) {
+        if (try_move(m)) { //makes move, checks king safety, keeps it if ok
+            out.push_back(m);
+            undo(); //because try_move leaves the move applied when legal
+        }
+    }
+
+
+}
+
 //parse FEN string
 BoardState ChessBoard::parse_fen(const char* fen) {
     BoardState s{};
@@ -333,11 +351,12 @@ BoardState ChessBoard::parse_fen(const char* fen) {
     }
     while (*fen == ' ') fen++;
 
-    s.passantTarget = NO_SQ;
+    s.passantTarget = 0;
     if (*fen != '-') {
         int epFile = fen[0] - 'a';
         int epRank = 8 - (fen[1] - '0'); // a8 is 0
-        s.passantTarget = epRank * 8 + epFile; // store square index
+        int epSq = epRank * 8 + epFile;
+        s.passantTarget = 1ULL << epSq;
         fen += 2;
     } else {
         fen++;

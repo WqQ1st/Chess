@@ -15,6 +15,8 @@
 using std::uint8_t;
 using std::uint64_t;
 
-void generate_moves(const BoardState& state, std::vector<Move>& moves);
+enum class GenMode { All, CapturesOnly };
+
+void generate_moves(const BoardState& state, std::vector<Move>& moves, GenMode mode);
 
 #endif
