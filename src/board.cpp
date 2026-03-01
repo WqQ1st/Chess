@@ -258,7 +258,7 @@ bool ChessBoard::try_move(const Move& m) {
         return false;
     }
 
-    int kingSq = __builtin_ctzll(kingBB); // takes lsb since exactly 1 king bit should be set
+    int kingSq = __builtin_ctzll(kingBB); //takes lsb since exactly 1 king bit should be set
 
     // if opponent attacks our king, illegal
     if (is_square_attacked(kingSq, them, st)) {
@@ -267,6 +267,18 @@ bool ChessBoard::try_move(const Move& m) {
     }
 
     return true;
+}
+
+bool ChessBoard::in_check(int side) {
+    const BoardState& st = curr_state();
+    int opponent = (side == WHITE) ? BLACK : WHITE;
+    return is_square_attacked(king_square(side), opponent, st);
+}
+
+uint8_t ChessBoard::king_square(int side) {
+    const BoardState& st = curr_state();
+    uint64_t kingBB = st.bitboards[(side == WHITE) ? WHITE_KING : BLACK_KING];
+    return __builtin_ctzll(kingBB);
 }
 
 //parse FEN string

@@ -207,6 +207,12 @@
             uint8_t getPiece(uint8_t square);
             void setPiece(uint8_t piece, uint8_t square);
 
+            //returns true if king is in check
+            bool in_check(int side);
+
+            //returns king square
+            uint8_t king_square(int side);
+
             //move and undo
             void move(const Move& move);
             void undo();

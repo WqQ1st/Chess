@@ -249,6 +249,32 @@ static void draw() {
         }
     }
 
+    //show checks
+    if (game.in_check(WHITE)) {
+        uint8_t sq = game.king_square(WHITE);
+        int x = sq % 8;
+        int y = sq / 8;
+        glColor3f(1, 0, 1);
+        glBegin(GL_QUADS);
+        glVertex2f(square_x + square_size * x, square_y + square_size * y);
+        glVertex2f(square_x + square_size * x, square_y + square_size * (y + 1));
+        glVertex2f(square_x + square_size * (x + 1), square_y + square_size * (y + 1));
+        glVertex2f(square_x + square_size * (x + 1), square_y + square_size * y);
+        glEnd();
+    }
+    if (game.in_check(BLACK)) {
+        uint8_t sq = game.king_square(BLACK);
+        int x = sq % 8;
+        int y = sq / 8;
+        glColor3f(1, 0, 1);
+        glBegin(GL_QUADS);
+        glVertex2f(square_x + square_size * x, square_y + square_size * y);
+        glVertex2f(square_x + square_size * x, square_y + square_size * (y + 1));
+        glVertex2f(square_x + square_size * (x + 1), square_y + square_size * (y + 1));
+        glVertex2f(square_x + square_size * (x + 1), square_y + square_size * y);
+        glEnd();
+    }
+
     //show prev move
     if (moveIndex > 0) {
     int from = moveStack[moveIndex - 1].from();
