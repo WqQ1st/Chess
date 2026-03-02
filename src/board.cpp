@@ -145,7 +145,7 @@ void ChessBoard::move(const Move& move) {
                 break;
             }
         }
-        
+
         //rook captured on its home square: lose that side
         if (capturedPiece == WHITE_ROOK) {
             if (toBoard & BB(H1)) st.castle &= ~wk;
@@ -159,7 +159,7 @@ void ChessBoard::move(const Move& move) {
 
 
     //en-passant
-    if (toBoard == st.passantTarget) {
+    if (move.flags() & MF_ENPASSANT) {
         if (movedPiece == WHITE_PAWN) {
             st.bitboards[BLACK_PAWN] ^= st.passantTarget << 8;
         } else if (movedPiece == BLACK_PAWN) {
@@ -221,9 +221,6 @@ void ChessBoard::move(const Move& move) {
         if (fromBoard & BB(H8)) st.castle &= ~bk;
         if (fromBoard & BB(A8)) st.castle &= ~bq;
     }
-
-    
-
 
     //promotions
     if (move.promotion() != EMPTY) {
