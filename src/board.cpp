@@ -136,7 +136,7 @@ void ChessBoard::move(const Move& move) {
     int capturedPiece = EMPTY;
 
 
-    //capture a piece
+    //capture a piece (could be a lil slow if en passant, since en passant sets capture flag rn)
     if (move.flags() & MF_CAPTURE) {
         for (int i = st.turn == WHITE ? 6 : 0; i < (st.turn == WHITE ? 11 : 5); ++i) {
             if (st.bitboards[i] & toBoard) {
@@ -161,40 +161,20 @@ void ChessBoard::move(const Move& move) {
     //en-passant
     if (move.flags() & MF_ENPASSANT) {
         if (movedPiece == WHITE_PAWN) {
-            st.bitboards[BLACK_PAWN] ^= st.passantTarget << 8;
+            st.bitboards[BLACK_PAWN] ^= st.passantTarget << 8; //deletes square in front of en passant target square
         } else if (movedPiece == BLACK_PAWN) {
-            st.bitboards[WHITE_PAWN] ^= st.passantTarget >> 8;
+            st.bitboards[WHITE_PAWN] ^= st.passantTarget >> 8; //deletes square in front of en passant target square
         }
     }
 
     //set en-passant target
-    if ((movedPiece == WHITE_PAWN || movedPiece == BLACK_PAWN) && abs(move.from() - move.to()) == 16) {
-        st.passantTarget = uint64_t(1) << int((move.from() + move.to()) * 0.5);
+    if (move.flags() & MF_DOUBLE) {
+        st.passantTarget = uint64_t(1) << int((move.from() + move.to()) * 0.5); //target en passant sq is halfway btwn to and from squares
     } else {
         st.passantTarget = 0;
     }
-
-    //castling
-    /*
-    if (movedPiece == WHITE_KING) {
-        if (moveBoard == 0x5000000000000000) {
-            stateStack[stackIndex].bitboards[WHITE_ROOK] ^= 0xa000000000000000; //king side
-        } else if (moveBoard == 0x1400000000000000) {
-            stateStack[stackIndex].bitboards[WHITE_ROOK] ^= 0x0900000000000000;
-        }
-    }
-    else if (movedPiece == BLACK_KING) {
-        if (moveBoard == 0x0000000000000050) {
-            stateStack[stackIndex].bitboards[BLACK_ROOK] ^= 0x00000000000000a0; //king side
-        } else if (moveBoard == 0x0000000000000014) {
-            stateStack[stackIndex].bitboards[BLACK_ROOK] ^= 0x0000000000000009;
-        }
-    }
-    */
-
     
-
-    // castle move: king moved two squares, so move rook too; generate moves alr checks legality of castling
+    //castle move: king moved two squares, so move rook too; generate moves alr checks legality of castling
     if (move.flags() & MF_CASTLE) {
         if (movedPiece == WHITE_KING) {
             if (move.to() == G1) st.bitboards[WHITE_ROOK] ^= (BB(H1) | BB(F1));
@@ -204,7 +184,6 @@ void ChessBoard::move(const Move& move) {
             else if (move.to() == C8) st.bitboards[BLACK_ROOK] ^= (BB(A8) | BB(D8));
         }
     }
-
 
     //update castling rights
     

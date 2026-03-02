@@ -68,7 +68,7 @@
     enum MoveFlag : uint8_t {
         MF_NONE      = 0,
         MF_CAPTURE   = 1 << 0,
-        MF_DOUBLE    = 1 << 1,
+        MF_DOUBLE    = 1 << 1, //double pawn push
         MF_ENPASSANT = 1 << 2,
         MF_CASTLE    = 1 << 3
     };
