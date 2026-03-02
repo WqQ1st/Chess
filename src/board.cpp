@@ -135,14 +135,28 @@ void ChessBoard::move(const Move& move) {
 
     int capturedPiece = EMPTY;
 
+
     //capture a piece
-    for (int i = st.turn == WHITE ? 6 : 0; i < (st.turn == WHITE ? 11 : 5); ++i) {
-        if (st.bitboards[i] & toBoard) {
-            st.bitboards[i] ^= toBoard;
-            capturedPiece = i;
-            break;
+    if (move.flags() & MF_CAPTURE) {
+        for (int i = st.turn == WHITE ? 6 : 0; i < (st.turn == WHITE ? 11 : 5); ++i) {
+            if (st.bitboards[i] & toBoard) {
+                st.bitboards[i] ^= toBoard;
+                capturedPiece = i;
+                break;
+            }
+        }
+        
+        //rook captured on its home square: lose that side
+        if (capturedPiece == WHITE_ROOK) {
+            if (toBoard & BB(H1)) st.castle &= ~wk;
+            if (toBoard & BB(A1)) st.castle &= ~wq;
+        }
+        else if (capturedPiece == BLACK_ROOK) {
+            if (toBoard & BB(H8)) st.castle &= ~bk;
+            if (toBoard & BB(A8)) st.castle &= ~bq;
         }
     }
+
 
     //en-passant
     if (toBoard == st.passantTarget) {
@@ -208,15 +222,7 @@ void ChessBoard::move(const Move& move) {
         if (fromBoard & BB(A8)) st.castle &= ~bq;
     }
 
-    //rook captured on its home square: lose that side
-    if (capturedPiece == WHITE_ROOK) {
-        if (toBoard & BB(H1)) st.castle &= ~wk;
-        if (toBoard & BB(A1)) st.castle &= ~wq;
-    }
-    else if (capturedPiece == BLACK_ROOK) {
-        if (toBoard & BB(H8)) st.castle &= ~bk;
-        if (toBoard & BB(A8)) st.castle &= ~bq;
-    }
+    
 
 
     //promotions
