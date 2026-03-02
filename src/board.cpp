@@ -176,12 +176,15 @@ void ChessBoard::move(const Move& move) {
     
     //castle move: king moved two squares, so move rook too; generate moves alr checks legality of castling
     if (move.flags() & MF_CASTLE) {
-        if (movedPiece == WHITE_KING) {
-            if (move.to() == G1) st.bitboards[WHITE_ROOK] ^= (BB(H1) | BB(F1));
-            else if (move.to() == C1) st.bitboards[WHITE_ROOK] ^= (BB(A1) | BB(D1));
-        } else if (movedPiece == BLACK_KING) {
-            if (move.to() == G8) st.bitboards[BLACK_ROOK] ^= (BB(H8) | BB(F8));
-            else if (move.to() == C8) st.bitboards[BLACK_ROOK] ^= (BB(A8) | BB(D8));
+        if (move.to() == G1) {
+            st.bitboards[WHITE_ROOK] ^= (BB(H1) | BB(F1));
+        } else if (move.to() == C1) {
+            st.bitboards[WHITE_ROOK] ^= (BB(A1) | BB(D1));
+        }
+        if (move.to() == G8) {
+            st.bitboards[BLACK_ROOK] ^= (BB(H8) | BB(F8));
+        } else if (move.to() == C8) {
+            st.bitboards[BLACK_ROOK] ^= (BB(A8) | BB(D8));
         }
     }
 
