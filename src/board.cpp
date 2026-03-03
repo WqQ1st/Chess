@@ -348,6 +348,10 @@ BoardState& ChessBoard::curr_state() {
     return stateStack[stackIndex];
 }
 
+const BoardState& ChessBoard::curr_state() const {
+    return stateStack[stackIndex];
+}
+
 ChessBoard::ChessBoard(const char *fen) {
     stateStack = new BoardState[1000];
     stackIndex = 0;

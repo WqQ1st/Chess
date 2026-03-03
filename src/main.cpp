@@ -10,6 +10,7 @@
 #include "movegen.h"
 #include "time.h"
 #include "perft.h"
+#include "eval.h"
 #include <vector>
 
 using std::uint8_t;
@@ -685,8 +686,6 @@ int main() {
     glViewport(0, 0, width, height);
     resize();
 
-
-
     //set color
     glClearColor(0, 0, 0, 1);
 
@@ -700,8 +699,11 @@ int main() {
     uint64_t time = get_time_ms();
     //test perft
     int depth = 5;
-    std::cout << "# nodes in starting position at depth " << depth << ": " << perft(game, depth) << std::endl;
-    std::cout << "time taken: " << get_time_ms() - time << "ms" << std::endl;
+    //std::cout << "# nodes in starting position at depth " << depth << ": " << perft(game, depth) << std::endl;
+    //std::cout << "time taken: " << get_time_ms() - time << "ms" << std::endl;
+
+    //print eval of position
+    std::cout << "eval: " << evaluate(game) << std::endl;
 
     //main loop
     while (!glfwWindowShouldClose(window)) {

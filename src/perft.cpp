@@ -21,3 +21,5 @@ uint64_t perft(ChessBoard& board, int depth) {
     }
     return nodes;
 }
+
+

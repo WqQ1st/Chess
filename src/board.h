@@ -224,7 +224,9 @@
             //try move, if succeeds, move is played (not undone)
             bool try_move(const Move& move);
 
+            //returns current state
             BoardState& curr_state();
+            const BoardState& curr_state() const;
 
         //constructor
         ChessBoard();

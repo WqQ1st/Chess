@@ -27,8 +27,7 @@ static inline int get_ls1b_index(uint64_t bitboard) {
     return __builtin_ctzll(bitboard);
 }
 
-static inline int pop_lsb(uint64_t& bb)
-{
+static inline int pop_lsb(uint64_t& bb) {
     int sq = __builtin_ctzll(bb);
     bb &= bb - 1;
     return sq;
