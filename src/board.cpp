@@ -180,8 +180,7 @@ void ChessBoard::move(const Move& move) {
             st.bitboards[WHITE_ROOK] ^= (BB(H1) | BB(F1));
         } else if (move.to() == C1) {
             st.bitboards[WHITE_ROOK] ^= (BB(A1) | BB(D1));
-        }
-        if (move.to() == G8) {
+        } else if (move.to() == G8) {
             st.bitboards[BLACK_ROOK] ^= (BB(H8) | BB(F8));
         } else if (move.to() == C8) {
             st.bitboards[BLACK_ROOK] ^= (BB(A8) | BB(D8));
@@ -189,7 +188,6 @@ void ChessBoard::move(const Move& move) {
     }
 
     //update castling rights
-    
     //king moved: lose both rights
     if (movedPiece == WHITE_KING) st.castle &= ~(wk | wq);
     if (movedPiece == BLACK_KING) st.castle &= ~(bk | bq);
@@ -237,12 +235,6 @@ bool ChessBoard::try_move(const Move& m) {
     // find our king square in the NEW state
     const BoardState& st = curr_state();
     uint64_t kingBB = st.bitboards[(us == WHITE) ? WHITE_KING : BLACK_KING];
-
-    // should never happen, but be defensive
-    if (!kingBB) {
-        undo();
-        return false;
-    }
 
     int kingSq = __builtin_ctzll(kingBB); //takes lsb since exactly 1 king bit should be set
 

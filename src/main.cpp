@@ -8,6 +8,8 @@
 #include "attacks.h"
 #include "square.h"
 #include "movegen.h"
+#include "time.h"
+#include "perft.h"
 #include <vector>
 
 using std::uint8_t;
@@ -695,6 +697,11 @@ int main() {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();   
 
+    uint64_t time = get_time_ms();
+    //test perft
+    int depth = 5;
+    std::cout << "# nodes in starting position at depth " << depth << ": " << perft(game, depth) << std::endl;
+    std::cout << "time taken: " << get_time_ms() - time << "ms" << std::endl;
 
     //main loop
     while (!glfwWindowShouldClose(window)) {
