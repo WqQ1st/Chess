@@ -20,8 +20,25 @@ int evaluate(const ChessBoard& board) {
             //init square
             square = pop_lsb(bitboard);
 
-            //add score of the piece
+            //score material weights
             score += material_score[bb_piece];
+
+            //score positional piece scores
+            switch (bb_piece) {
+                //evaluate white pieces' positional scores
+                case WHITE_PAWN:    score += pawn_score[square]; break;
+                case WHITE_KNIGHT:  score += knight_score[square]; break;
+                case WHITE_BISHOP:  score += bishop_score[square]; break;
+                case WHITE_ROOK:    score += rook_score[square]; break;
+                case WHITE_KING:    score += king_score[square]; break;
+
+                //evaluate black pieces' positional scores
+                case BLACK_PAWN:    score -= pawn_score[mirror_score[square]]; break;
+                case BLACK_KNIGHT:  score -= knight_score[mirror_score[square]]; break;
+                case BLACK_BISHOP:  score -= bishop_score[mirror_score[square]]; break;
+                case BLACK_ROOK:    score -= rook_score[mirror_score[square]]; break;
+                case BLACK_KING:    score -= king_score[mirror_score[square]]; break;
+            }
         }
     }
 

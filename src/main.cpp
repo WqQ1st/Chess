@@ -703,7 +703,7 @@ int main() {
     //std::cout << "time taken: " << get_time_ms() - time << "ms" << std::endl;
 
     //print eval of position
-    std::cout << "eval: " << evaluate(game) << std::endl;
+    //std::cout << "eval: " << evaluate(game) << std::endl;
 
     //main loop
     while (!glfwWindowShouldClose(window)) {
