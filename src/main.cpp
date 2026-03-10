@@ -22,7 +22,7 @@ ChessBoard game = ChessBoard(start_position);
 
 //for engine config
 constexpr Color ENGINE_SIDE = BLACK;
-constexpr int ENGINE_DEPTH = 4;
+constexpr int ENGINE_DEPTH = 1;
 static void maybe_make_engine_move();
 static void make_engine_move();
 
@@ -533,7 +533,7 @@ static void mouseclick(double x, double y) { //handles mouse click
         select_x = -1;
         select_y = -1;
 
-        maybe_make_engine_move();
+        //maybe_make_engine_move();
     } else {
         select_x = click_x;
         select_y = click_y;
@@ -546,7 +546,7 @@ static void keydown(int key) {
         glfwSetWindowShouldClose(window, true);
     } else if (key == GLFW_KEY_X) {
         flipBoard();
-    } else if (key == GLFW_KEY_Z && moveIndex > 0) {
+    } else if ((key == GLFW_KEY_Z || key == GLFW_KEY_LEFT) && moveIndex > 0) {
         game.undo();
         --moveIndex;
         game.generate_legal_moves(legal);
@@ -733,15 +733,15 @@ int main() {
     glLoadIdentity();   
 
     uint64_t time = get_time_ms();
-    //test perft
-    int depth = 2;
+    //test perft, eval, and search
+    int depth = 4;
     //std::cout << "# nodes in starting position at depth " << depth << ": " << perft(game, depth) << std::endl;
     //std::cout << "time taken: " << get_time_ms() - time << "ms" << std::endl;
 
     //print eval of position
     //std::cout << "eval: " << evaluate(game) << std::endl;
 
-    search_position(game, depth);
+    //search_position(game, depth);
 
     //main loop
     while (!glfwWindowShouldClose(window)) {

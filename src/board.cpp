@@ -297,8 +297,21 @@ void ChessBoard::generate_legal_moves(std::vector<Move>& out) {
             undo(); //because try_move leaves the move applied when legal
         }
     }
+}
 
+void ChessBoard::generate_legal_captures(std::vector<Move>& out) {
+    out.clear();
 
+    std::vector<Move> pseudo;
+
+    generate_moves(curr_state(), pseudo, GenMode::CapturesOnly); //populates pseudo w/ legal captures
+
+    for (const Move& m : pseudo) {
+        if (try_move(m)) { //makes move, checks king safety, keeps it if ok
+            out.push_back(m);
+            undo(); //because try_move leaves the move applied when legal
+        }
+    }
 }
 
 //parse FEN string
