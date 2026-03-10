@@ -56,6 +56,17 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
         }
     }
 
+    //check for checkmate and stalemate (no legal moves)
+    if (moves.size() == 0) {
+        if (board.in_check(board.curr_state().turn)) {
+            //return mating score
+            return -49000 + ply;
+        } else {
+            //return stalemate score
+            return 0;
+        }
+    }
+
     //found better move
     if (old_alpha != alpha) {
         best_move = best_sofar;

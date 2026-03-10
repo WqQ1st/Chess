@@ -247,11 +247,36 @@ bool ChessBoard::try_move(const Move& m) {
     return true;
 }
 
+//checking check, checkmate, stalemate status
+
 bool ChessBoard::in_check(int side) {
     const BoardState& st = curr_state();
     int opponent = (side == WHITE) ? BLACK : WHITE;
     return is_square_attacked(king_square(side), opponent, st);
 }
+
+bool ChessBoard::is_checkmate() {
+    if (!in_check(curr_state().turn)) {
+        return false;
+    }
+
+    std::vector<Move> moves;
+    generate_legal_moves(moves);
+
+    return moves.empty();
+}
+
+bool ChessBoard::is_stalemate() {
+    if (in_check(curr_state().turn)) {
+        return false;
+    }
+
+    std::vector<Move> moves;
+    generate_legal_moves(moves);
+
+    return moves.empty();
+}
+
 
 uint8_t ChessBoard::king_square(int side) {
     const BoardState& st = curr_state();

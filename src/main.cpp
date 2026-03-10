@@ -24,6 +24,7 @@ ChessBoard game = ChessBoard(start_position);
 constexpr Color ENGINE_SIDE = BLACK;
 constexpr int ENGINE_DEPTH = 4;
 static void maybe_make_engine_move();
+static void make_engine_move();
 
 int width = 640;
 int height = 480;
@@ -549,6 +550,8 @@ static void keydown(int key) {
         game.undo();
         --moveIndex;
         game.generate_legal_moves(legal);
+    } else if (key == GLFW_KEY_RIGHT) {
+        make_engine_move();
     }
 }
 
@@ -633,6 +636,10 @@ static void maybe_make_engine_move() {
         return;
     }
 
+    make_engine_move();
+}
+
+static void make_engine_move() {
     Move best = find_best_move(game, ENGINE_DEPTH);
 
     moveStack[moveIndex] = best;

@@ -214,6 +214,12 @@
             //returns true if king is in check
             bool in_check(int side);
 
+            //returns true if king is checkmated
+            bool is_checkmate();
+
+            //returns true if king is in stalemate
+            bool is_stalemate();
+
             //returns king square
             uint8_t king_square(int side);
 
