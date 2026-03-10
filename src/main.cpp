@@ -11,6 +11,7 @@
 #include "time.h"
 #include "perft.h"
 #include "eval.h"
+#include "search.h"
 #include <vector>
 
 using std::uint8_t;
@@ -18,6 +19,11 @@ using std::uint64_t;
 
 //Game state
 ChessBoard game = ChessBoard(start_position);
+
+//for engine config
+constexpr Color ENGINE_SIDE = BLACK;
+constexpr int ENGINE_DEPTH = 4;
+static void maybe_make_engine_move();
 
 int width = 640;
 int height = 480;
@@ -398,6 +404,7 @@ static void mouseclick(double x, double y) { //handles mouse click
                 promote_x = -1;
                 promote_y = -1;
 
+                maybe_make_engine_move();
                 return;
             }
         }
@@ -524,6 +531,8 @@ static void mouseclick(double x, double y) { //handles mouse click
 
         select_x = -1;
         select_y = -1;
+
+        maybe_make_engine_move();
     } else {
         select_x = click_x;
         select_y = click_y;
@@ -614,6 +623,26 @@ void init_all() {
     init_sliders_attacks(false);
 }
 
+static void maybe_make_engine_move() {
+    if (promote_y != -1 || game.curr_state().turn != ENGINE_SIDE) {
+        return; 
+    }
+
+    game.generate_legal_moves(legal);
+    if (legal.empty()) {
+        return;
+    }
+
+    Move best = find_best_move(game, ENGINE_DEPTH);
+
+    moveStack[moveIndex] = best;
+    game.move(moveStack[moveIndex++]);
+    game.generate_legal_moves(legal);
+
+    select_x = -1;
+    select_y = -1;
+}
+
 int main() {
     init_all();
 
@@ -698,12 +727,14 @@ int main() {
 
     uint64_t time = get_time_ms();
     //test perft
-    int depth = 5;
+    int depth = 2;
     //std::cout << "# nodes in starting position at depth " << depth << ": " << perft(game, depth) << std::endl;
     //std::cout << "time taken: " << get_time_ms() - time << "ms" << std::endl;
 
     //print eval of position
     //std::cout << "eval: " << evaluate(game) << std::endl;
+
+    search_position(game, depth);
 
     //main loop
     while (!glfwWindowShouldClose(window)) {

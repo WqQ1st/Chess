@@ -6,9 +6,10 @@
 #include "eval.h"
 #include "movegen.h"
 
-
-static int negamax(ChessBoard& board, int alpha, int beta, int depth);
+#include <iostream>
 
 int search_position(ChessBoard& board, int depth);
+
+Move find_best_move(ChessBoard& board, int depth);
 
 #endif
