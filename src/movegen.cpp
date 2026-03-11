@@ -1,5 +1,40 @@
 #include "movegen.h"
 
+
+//scores moves for sorting
+static int score_move(const BoardState& state, const Move& m) {
+    //score captures
+    if (m.flags() & MF_CAPTURE) {
+        //init target piece
+        int target_piece = WHITE_PAWN;
+
+        if (state.getPiece(m.to()) != EMPTY) {
+            Color target_color = (state.turn == WHITE) ? BLACK : WHITE;
+            target_piece = state.getPiece(target_color, m.to());
+        }
+
+        //score move by LVV LVA lookup
+        return mvv_lva[m.piece()][target_piece];
+    } else { //score quiet moves
+
+    }
+
+    //default score
+    return 0;
+}
+
+//sort moves in descending order
+static int sort_moves(const BoardState& state, std::vector<Move>& moves) {
+    //move score
+    std::vector<int> move_scores;
+
+    std::sort(moves.begin(), moves.end(), [&state](const Move& a, const Move& b) {
+        return score_move(state, a) > score_move(state, b);
+    });
+
+    return 0;
+}
+
 //generates all pseudo legal moves
 void generate_moves(const BoardState& state, std::vector<Move>& moves, GenMode mode) {
     moves.clear(); //clears the moves vector before adding all psuedo legal moves
@@ -357,4 +392,6 @@ void generate_moves(const BoardState& state, std::vector<Move>& moves, GenMode m
             }
         }
     }
+
+    sort_moves(state, moves);
 }

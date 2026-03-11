@@ -189,7 +189,31 @@
             }
             return EMPTY;
         }
-    };
+
+    uint8_t getPiece(uint8_t square) const {
+        uint64_t mask = uint64_t(1) << square;
+        for (int i = 0; i < 12; ++i) {
+            if (bitboards[i] & mask) {
+                return i;
+            }
+        }
+        return EMPTY;
+    }
+
+    uint8_t getPiece(Color c, uint8_t square) const {
+        if (c == BOTH) {
+            return getPiece(square);
+        }
+        uint64_t mask = uint64_t(1) << square;
+        int start = (c == WHITE) ? WHITE_PAWN : BLACK_PAWN;
+        for (int i = start; i < start + 6; ++i) {
+            if (bitboards[i] & mask) {
+                return i;
+            }
+        }
+        return EMPTY;
+    }
+};
 
     class ChessBoard {
         private:
@@ -210,6 +234,7 @@
 
             //setters and getters on a specific square
             uint8_t getPiece(uint8_t square);
+            uint8_t getPiece(Color c, uint8_t square);
             void setPiece(uint8_t piece, uint8_t square);
 
             //returns true if king is in check

@@ -105,6 +105,20 @@ uint8_t ChessBoard::getPiece(uint8_t square) {
     return EMPTY;
 }
 
+uint8_t ChessBoard::getPiece(Color c, uint8_t square) {
+    if (c == BOTH) {
+        return getPiece(square);
+    }
+    uint64_t mask = uint64_t(1) << square;
+    int start = (c == WHITE) ? WHITE_PAWN : BLACK_PAWN;
+    for (int i = start; i < start + 6; ++i) {
+        if (stateStack[stackIndex].bitboards[i] & mask) {
+            return i;
+        }
+    }
+    return EMPTY;
+}
+
 void ChessBoard::setPiece(uint8_t piece, uint8_t square) {
     uint64_t mask = uint64_t(1) << square;
     for (int i = 0; i < 12; ++i) {

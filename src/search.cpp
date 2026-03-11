@@ -4,8 +4,11 @@ static int ply = 0; //half move counter from root
 static Move best_move;
 static int nodes = 0;
 
-//quiescence search
+//quiescence search, returns eval 
 static int quiescence(ChessBoard& board, int alpha, int beta) {
+    //increment nodes count
+    nodes++;
+
     //evaluate position
     int eval = evaluate(board);
     //fail-hard beta cutoff
@@ -14,17 +17,17 @@ static int quiescence(ChessBoard& board, int alpha, int beta) {
         return beta;
     }
 
-    //found a better move
+    //current position before moving > alpha, raise lower bound
     if (eval > alpha) {
         //PV node (move)
         alpha = eval;
     }
 
-    //create movelist with only legal moves
+    //create movelist with only legal captures
     std::vector<Move> moves;
     board.generate_legal_captures(moves);
 
-    //loop over moves in move list
+    //loop over moves in capture move list
     for (int count = 0; count < moves.size(); ++count) {
         //increment ply
         ply++;
@@ -149,4 +152,8 @@ Move find_best_move(ChessBoard& board, int depth) {
     negamax(board, -50000, 50000, depth);
 
     return best_move;
+}
+
+void print_nodes() {
+    std::cout << "# nodes: " << nodes << std::endl;
 }

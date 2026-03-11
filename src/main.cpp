@@ -22,7 +22,7 @@ ChessBoard game = ChessBoard(start_position);
 
 //for engine config
 constexpr Color ENGINE_SIDE = BLACK;
-constexpr int ENGINE_DEPTH = 1;
+constexpr int ENGINE_DEPTH = 4;
 static void maybe_make_engine_move();
 static void make_engine_move();
 
