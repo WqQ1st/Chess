@@ -18,7 +18,7 @@ using std::uint8_t;
 using std::uint64_t;
 
 //Game state
-ChessBoard game = ChessBoard(start_position);
+ChessBoard game = ChessBoard(killer_position);
 
 //for engine config
 constexpr Color ENGINE_SIDE = BLACK;
@@ -740,6 +740,7 @@ int main() {
 
     //print eval of position
     //std::cout << "eval: " << evaluate(game) << std::endl;
+    search_and_print(game, depth);
 
     //search_position(game, depth);
 

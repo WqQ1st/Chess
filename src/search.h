@@ -12,6 +12,8 @@ int search_position(ChessBoard& board, int depth);
 
 Move find_best_move(ChessBoard& board, int depth);
 
+void search_and_print(ChessBoard& board, int depth);
+
 void print_nodes();
 
 #endif

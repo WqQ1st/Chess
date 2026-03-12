@@ -99,9 +99,12 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
 
         //fail-hard beta cutoff
         if (score >= beta) {
-            //store killer moves
-            killer_moves[1][ply] = killer_moves[0][ply];
-            killer_moves[0][ply] = moves[count];
+            //for only quiet moves
+            if (!(moves[count].flags() & MF_CAPTURE)) {
+                //store killer moves
+                killer_moves[1][ply] = killer_moves[0][ply];
+                killer_moves[0][ply] = moves[count];
+            }
 
             //node (move) fails high
             return beta;
@@ -109,8 +112,11 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
 
         //found a better move
         if (score > alpha) {
-            //store history moves, gives slightly higher score for moves that were better than alpha
-            history_moves[moves[count].piece()][moves[count].to()] += depth;
+            //for only quiet moves
+            if (!(moves[count].flags() & MF_CAPTURE)) {
+                //store history moves, gives slightly higher score for moves that were better than alpha
+                history_moves[moves[count].piece()][moves[count].to()] += depth;
+            }
 
             //PV node (move)
             alpha = score;
@@ -149,6 +155,11 @@ int search_position(ChessBoard& board, int depth) {
     std::cout << "best move: " << best_move.to_string() << std::endl;
 
     return score;
+}
+
+void search_and_print(ChessBoard& board, int depth) {
+    int score = search_position(board, depth);
+    std::cout << "score: " << score << ", nodes: " << nodes << std::endl;
 }
 
 Move find_best_move(ChessBoard& board, int depth) {
