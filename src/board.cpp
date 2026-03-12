@@ -229,6 +229,8 @@ void ChessBoard::move(const Move& move) {
         st.turn = WHITE;
     }
 
+    st.ply++;
+
     st.update_occupancies();
 }
 

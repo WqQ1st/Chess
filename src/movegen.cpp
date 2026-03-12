@@ -1,5 +1,8 @@
 #include "movegen.h"
 
+//define history and killer moves arrays
+Move killer_moves[2][64];
+int history_moves[12][64];
 
 //scores moves for sorting
 static int score_move(const BoardState& state, const Move& m) {
@@ -14,9 +17,19 @@ static int score_move(const BoardState& state, const Move& m) {
         }
 
         //score move by LVV LVA lookup
-        return mvv_lva[m.piece()][target_piece];
+        return mvv_lva[m.piece()][target_piece] + 10000;
     } else { //score quiet moves
-
+        //score 1st killer move
+        if (killer_moves[0][state.ply] == m) {
+            return 9000;
+        } else if (killer_moves[1][state.ply] == m) {
+            //score 2nd killer move
+            return 8000;
+        } else {
+            //score history moves
+            return history_moves[m.from()][m.to()];
+        }
+        
     }
 
     //default score

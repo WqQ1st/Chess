@@ -99,12 +99,19 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
 
         //fail-hard beta cutoff
         if (score >= beta) {
+            //store killer moves
+            killer_moves[1][ply] = killer_moves[0][ply];
+            killer_moves[0][ply] = moves[count];
+
             //node (move) fails high
             return beta;
         }
 
         //found a better move
         if (score > alpha) {
+            //store history moves, gives slightly higher score for moves that were better than alpha
+            history_moves[moves[count].piece()][moves[count].to()] += depth;
+
             //PV node (move)
             alpha = score;
 

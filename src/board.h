@@ -148,6 +148,11 @@
 
             return s;
         }
+
+        //define == for moves
+        bool operator==(const Move& other) const {
+            return move == other.move;
+        }
     };
 
     struct BoardState {
@@ -165,6 +170,9 @@
 
         //whose turn it is
         uint8_t turn = WHITE;
+
+        //number of half moves
+        int ply = 0;
 
         //update occupancies to reflect current board
         void update_occupancies() {

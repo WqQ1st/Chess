@@ -23,6 +23,13 @@ static int score_move(ChessBoard& board, const Move& m);
 
 static int sort_moves(ChessBoard& board, std::vector<Move>& moves);
 
+//killer and history moves
+//killer moves: [id][ply] id: 1st or 2nd move
+extern Move killer_moves[2][64];
+
+//history moves: [piece][square]
+extern int history_moves[12][64];
+
 // most valuable victim & less valuable attacker
 
 /*
