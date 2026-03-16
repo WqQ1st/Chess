@@ -12,6 +12,8 @@
 #include <iostream>
 #include <vector>
 
+#include "constants.h"
+
 using std::uint8_t;
 using std::uint64_t;
 
@@ -25,7 +27,7 @@ static int sort_moves(ChessBoard& board, std::vector<Move>& moves);
 
 //killer and history moves
 //killer moves: [id][ply] id: 1st or 2nd move
-extern Move killer_moves[2][64];
+extern Move killer_moves[2][max_ply];
 
 //history moves: [piece][square]
 extern int history_moves[12][64];

@@ -5,6 +5,7 @@
 #include "bitboards.h"
 #include "eval.h"
 #include "movegen.h"
+#include "constants.h"
 
 #include <iostream>
 
@@ -16,8 +17,10 @@ void search_and_print(ChessBoard& board, int depth);
 
 void print_nodes();
 
-extern int pv_length[64];
+static void clear_vars();
 
-extern Move pv_table[64][64];
+extern int pv_length[max_ply];
+
+extern Move pv_table[max_ply][max_ply];
 
 #endif

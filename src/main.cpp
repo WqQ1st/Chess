@@ -13,6 +13,9 @@
 #include "eval.h"
 #include "search.h"
 #include <vector>
+#include "constants.h"
+#include <thread>
+#include <chrono>
 
 using std::uint8_t;
 using std::uint64_t;
@@ -21,8 +24,8 @@ using std::uint64_t;
 ChessBoard game = ChessBoard(start_position);
 
 //for engine config
-constexpr Color ENGINE_SIDE = BLACK;
-constexpr int ENGINE_DEPTH = 6;
+constexpr Color ENGINE_SIDE = engine_side;
+constexpr int ENGINE_DEPTH = engine_depth;
 static void maybe_make_engine_move();
 static void make_engine_move();
 
@@ -406,7 +409,7 @@ static void mouseclick(double x, double y) { //handles mouse click
                 promote_y = -1;
 
                 //make engine move after user input moves
-                //maybe_make_engine_move();
+                maybe_make_engine_move();
                 return;
             }
         }
@@ -535,7 +538,7 @@ static void mouseclick(double x, double y) { //handles mouse click
         select_y = -1;
 
         //make engine move after user input moves
-        //maybe_make_engine_move();
+        maybe_make_engine_move();
     } else {
         select_x = click_x;
         select_y = click_y;
@@ -637,6 +640,10 @@ static void maybe_make_engine_move() {
     if (legal.empty()) {
         return;
     }
+
+    draw();
+    //sleep for 1 second
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     make_engine_move();
 }

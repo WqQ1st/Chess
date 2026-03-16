@@ -5,8 +5,8 @@ static Move best_move;
 static int nodes = 0;
 
 //init pv length and pv table arrays
-int pv_length[64];
-Move pv_table[64][64];
+int pv_length[max_ply];
+Move pv_table[max_ply][max_ply];
 
 //quiescence search, returns eval 
 static int quiescence(ChessBoard& board, int alpha, int beta) {
@@ -78,6 +78,12 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
     if (depth == 0) {
         //run quiescence search
         return quiescence(board, alpha, beta);
+    }
+
+    //we're too deep, so arrays using max_ply constants will overflow
+    if (ply >= max_ply) {
+        //return static eval of the current board
+        return evaluate(board);
     }
 
     //increment nodes count
@@ -164,18 +170,24 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
 }
 
 int search_position(ChessBoard& board, int depth) {
-    ply = 0;
-    nodes = 0;
-    best_move = Move();
-    memset(killer_moves, 0, sizeof(killer_moves));
-    memset(history_moves, 0, sizeof(history_moves));
+    clear_vars();
 
-    //find the best move within a given position
-    int score = negamax(board, -50000, 50000, depth);
+    //iterative deepening
+    for (int current_depth = 1; current_depth <= depth; ++current_depth) {
+        //find the best move within a given position
+        int score = negamax(board, -50000, 50000, current_depth);
+
+        for (int count = 0; count < pv_length[0]; ++count) {
+            //print pv move
+            std::cout << pv_table[0][count].to_string() << " ";
+        }
+        std::cout << std::endl;
+    }
 
     std::cout << "best move: " << best_move.to_string() << std::endl;
 
-    return score;
+    //placeholder
+    return 1;
 }
 
 void search_and_print(ChessBoard& board, int depth) {
@@ -184,17 +196,25 @@ void search_and_print(ChessBoard& board, int depth) {
 }
 
 Move find_best_move(ChessBoard& board, int depth) {
-    ply = 0;
-    nodes = 0;
-    best_move = Move();
-    memset(killer_moves, 0, sizeof(killer_moves));
-    memset(history_moves, 0, sizeof(history_moves));
+    search_position(board, depth);
 
-    negamax(board, -50000, 50000, depth);
+    //for debugging/evaluation purposes
+    print_nodes();
 
     return best_move;
 }
 
 void print_nodes() {
     std::cout << "# nodes: " << nodes << std::endl;
+}
+
+//clears variables for next search
+static void clear_vars() {
+    ply = 0;
+    nodes = 0;
+    best_move = Move();
+    memset(killer_moves, 0, sizeof(killer_moves));
+    memset(history_moves, 0, sizeof(history_moves));
+    memset(pv_length, 0, sizeof(pv_length));
+    memset(pv_table, 0, sizeof(pv_table));
 }

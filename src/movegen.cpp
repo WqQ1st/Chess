@@ -1,7 +1,7 @@
 #include "movegen.h"
 
 //define history and killer moves arrays
-Move killer_moves[2][64];
+Move killer_moves[2][max_ply];
 int history_moves[12][64];
 
 //scores moves for sorting
