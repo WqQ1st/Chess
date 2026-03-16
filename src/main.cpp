@@ -18,11 +18,11 @@ using std::uint8_t;
 using std::uint64_t;
 
 //Game state
-ChessBoard game = ChessBoard(killer_position);
+ChessBoard game = ChessBoard(start_position);
 
 //for engine config
 constexpr Color ENGINE_SIDE = BLACK;
-constexpr int ENGINE_DEPTH = 4;
+constexpr int ENGINE_DEPTH = 6;
 static void maybe_make_engine_move();
 static void make_engine_move();
 
@@ -405,7 +405,8 @@ static void mouseclick(double x, double y) { //handles mouse click
                 promote_x = -1;
                 promote_y = -1;
 
-                maybe_make_engine_move();
+                //make engine move after user input moves
+                //maybe_make_engine_move();
                 return;
             }
         }
@@ -533,6 +534,7 @@ static void mouseclick(double x, double y) { //handles mouse click
         select_x = -1;
         select_y = -1;
 
+        //make engine move after user input moves
         //maybe_make_engine_move();
     } else {
         select_x = click_x;
@@ -734,13 +736,13 @@ int main() {
 
     uint64_t time = get_time_ms();
     //test perft, eval, and search
-    int depth = 4;
+    int depth = 5;
     //std::cout << "# nodes in starting position at depth " << depth << ": " << perft(game, depth) << std::endl;
     //std::cout << "time taken: " << get_time_ms() - time << "ms" << std::endl;
 
     //print eval of position
     //std::cout << "eval: " << evaluate(game) << std::endl;
-    search_and_print(game, depth);
+    //search_and_print(game, depth);
 
     //search_position(game, depth);
 

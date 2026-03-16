@@ -10,3 +10,6 @@ chess
 *.out
 *.exe
 build/
+
+# Personal notes
+notes.txt

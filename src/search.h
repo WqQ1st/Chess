@@ -16,4 +16,8 @@ void search_and_print(ChessBoard& board, int depth);
 
 void print_nodes();
 
+extern int pv_length[64];
+
+extern Move pv_table[64][64];
+
 #endif

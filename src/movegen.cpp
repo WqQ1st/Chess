@@ -27,7 +27,7 @@ static int score_move(const BoardState& state, const Move& m) {
             return 8000;
         } else {
             //score history moves
-            return history_moves[m.from()][m.to()];
+            return history_moves[m.piece()][m.to()];
         }
         
     }

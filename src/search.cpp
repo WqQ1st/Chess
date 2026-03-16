@@ -4,6 +4,10 @@ static int ply = 0; //half move counter from root
 static Move best_move;
 static int nodes = 0;
 
+//init pv length and pv table arrays
+int pv_length[64];
+Move pv_table[64][64];
+
 //quiescence search, returns eval 
 static int quiescence(ChessBoard& board, int alpha, int beta) {
     //increment nodes count
@@ -68,8 +72,11 @@ static int quiescence(ChessBoard& board, int alpha, int beta) {
 
 //negamax alpha beta search
 static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
+    //init pv length
+    pv_length[ply] = ply;
+
     if (depth == 0) {
-        //run quiscence search
+        //run quiescence search
         return quiescence(board, alpha, beta);
     }
 
@@ -121,6 +128,18 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
             //PV node (move)
             alpha = score;
 
+            //write PV move to table
+            pv_table[ply][ply] = moves[count];
+
+            //loop over the next ply, copy all moves from (ply + 1) line
+            for (int next_ply = ply + 1; next_ply < pv_length[ply + 1]; ++next_ply) {
+                //copy move from deeper ply into current line
+                pv_table[ply][next_ply] = pv_table[ply + 1][next_ply];
+            }
+
+            //adjust pv length
+            pv_length[ply] = pv_length[ply + 1];
+
             //update best move if root
             if (ply == 0) {
                 best_move = moves[count];
@@ -148,6 +167,8 @@ int search_position(ChessBoard& board, int depth) {
     ply = 0;
     nodes = 0;
     best_move = Move();
+    memset(killer_moves, 0, sizeof(killer_moves));
+    memset(history_moves, 0, sizeof(history_moves));
 
     //find the best move within a given position
     int score = negamax(board, -50000, 50000, depth);
@@ -166,6 +187,8 @@ Move find_best_move(ChessBoard& board, int depth) {
     ply = 0;
     nodes = 0;
     best_move = Move();
+    memset(killer_moves, 0, sizeof(killer_moves));
+    memset(history_moves, 0, sizeof(history_moves));
 
     negamax(board, -50000, 50000, depth);
 
