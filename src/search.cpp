@@ -100,7 +100,7 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
     // Extend search by 1 if the side to move is in check
     if (board.in_check(board.curr_state().turn)) {
         depth++;
-}
+    }
 
     if (depth == 0) {
         //run quiescence search
