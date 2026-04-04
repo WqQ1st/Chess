@@ -94,6 +94,9 @@ static int quiescence(ChessBoard& board, int alpha, int beta) {
 
 //negamax alpha beta search
 static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
+    //define find PV node variable
+    bool found_pv = false;
+
     //init pv length
     pv_length[ply] = ply;
 
@@ -138,8 +141,23 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
         //make the move
         board.move(moves[count]);
 
-        //score current move
-        int score = -negamax(board, -beta, -alpha, depth - 1);
+        //declare score variable (from the static evaluation perspective)
+        int score;
+
+        //on PV node hit
+        if (found_pv) {
+            //move between alpha and beta (PV move)
+            score = -negamax(board, -alpha - 1, -alpha, depth - 1);
+
+            //a subsequent move was better than the PV move: searches in the normal alpha beta manner
+            if ((score > alpha) && (score < beta)) {
+                //re-search the move 
+                score = -negamax(board, -beta, -alpha, depth - 1);
+            }
+        } else {
+            //for all other types of moves, do normal alpha beta search
+            score = -negamax(board, -beta, -alpha, depth - 1);
+        }
 
         //decrement ply
         ply--;
@@ -170,6 +188,9 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
 
             //PV node (move)
             alpha = score;
+
+            //enable found PV flag
+            found_pv = true;
 
             //write PV move to table
             pv_table[ply][ply] = moves[count];
