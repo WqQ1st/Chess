@@ -10,9 +10,6 @@ int score_move(const BoardState& state, const Move& m) {
     //if PV move scoring is allowed
     if (score_pv) {
         if (pv_table[0][ply] == m) {
-            //disable score_pv flag
-            score_pv = false;
-
             //debug print
             //std::cout << "PV move: " << m.to_string() << ", ply: " << ply << std::endl;
 
