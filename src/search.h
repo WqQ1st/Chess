@@ -1,13 +1,21 @@
 #ifndef SEARCH_H
 #define SEARCH_H
 
-#include "board.h"
 #include "bitboards.h"
 #include "eval.h"
 #include "movegen.h"
 #include "constants.h"
 
 #include <iostream>
+
+//constants
+extern bool follow_pv;
+extern bool score_pv;
+extern int pv_length[max_ply];
+extern Move pv_table[max_ply][max_ply];
+extern int ply;
+
+static void enable_pv_scoring(std::vector<Move>& moves);
 
 int search_position(ChessBoard& board, int depth);
 
@@ -19,8 +27,5 @@ void print_nodes();
 
 static void clear_vars();
 
-extern int pv_length[max_ply];
-
-extern Move pv_table[max_ply][max_ply];
 
 #endif

@@ -1,11 +1,26 @@
 #include "movegen.h"
+#include "search.h"
 
 //define history and killer moves arrays
 Move killer_moves[2][max_ply];
 int history_moves[12][64];
 
 //scores moves for sorting
-static int score_move(const BoardState& state, const Move& m) {
+int score_move(const BoardState& state, const Move& m) {
+    //if PV move scoring is allowed
+    if (score_pv) {
+        if (pv_table[0][ply] == m) {
+            //disable score_pv flag
+            score_pv = false;
+
+            //debug print
+            //std::cout << "PV move: " << m.to_string() << ", ply: " << ply << std::endl;
+
+            //give PV move highest score to prioritize it
+            return 20000;
+        }
+    }
+
     //score captures
     if (m.flags() & MF_CAPTURE) {
         //init target piece
@@ -20,9 +35,9 @@ static int score_move(const BoardState& state, const Move& m) {
         return mvv_lva[m.piece()][target_piece] + 10000;
     } else { //score quiet moves
         //score 1st killer move
-        if (killer_moves[0][state.ply] == m) {
+        if (killer_moves[0][ply] == m) {
             return 9000;
-        } else if (killer_moves[1][state.ply] == m) {
+        } else if (killer_moves[1][ply] == m) {
             //score 2nd killer move
             return 8000;
         } else {
@@ -37,7 +52,7 @@ static int score_move(const BoardState& state, const Move& m) {
 }
 
 //sort moves in descending order
-static int sort_moves(const BoardState& state, std::vector<Move>& moves) {
+int sort_moves(const BoardState& state, std::vector<Move>& moves) {
     //move score
     std::vector<int> move_scores;
 
@@ -406,5 +421,5 @@ void generate_moves(const BoardState& state, std::vector<Move>& moves, GenMode m
         }
     }
 
-    sort_moves(state, moves);
+    //sort_moves(state, moves);
 }

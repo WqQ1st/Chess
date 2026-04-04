@@ -21,9 +21,9 @@ enum class GenMode { All, CapturesOnly };
 
 void generate_moves(const BoardState& state, std::vector<Move>& moves, GenMode mode);
 
-static int score_move(ChessBoard& board, const Move& m);
+int score_move(const BoardState& board, const Move& m);
 
-static int sort_moves(ChessBoard& board, std::vector<Move>& moves);
+int sort_moves(const BoardState& board, std::vector<Move>& moves);
 
 //killer and history moves
 //killer moves: [id][ply] id: 1st or 2nd move

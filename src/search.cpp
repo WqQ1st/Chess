@@ -1,12 +1,34 @@
 #include "search.h"
 
-static int ply = 0; //half move counter from root
+int ply = 0; //half move counter from root
 static Move best_move;
 static int nodes = 0;
+
 
 //init pv length and pv table arrays
 int pv_length[max_ply];
 Move pv_table[max_ply][max_ply];
+
+bool follow_pv;
+bool score_pv;
+
+//enable PV move scoring
+static void enable_pv_scoring(std::vector<Move>& moves) {
+    //disable following pv
+
+    follow_pv = false;
+    //loop over move list
+    for (int count = 0; count < moves.size(); ++count) {
+        //make sure we hit PV move
+        if (pv_table[0][ply] == moves[count]) {
+            //enable move scoring
+            score_pv = true;
+
+            //enable following PV
+            follow_pv = true;
+        }
+    }
+}
 
 //quiescence search, returns eval 
 static int quiescence(ChessBoard& board, int alpha, int beta) {
@@ -75,6 +97,11 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
     //init pv length
     pv_length[ply] = ply;
 
+    // Extend search by 1 if the side to move is in check
+    if (board.in_check(board.curr_state().turn)) {
+        depth++;
+}
+
     if (depth == 0) {
         //run quiescence search
         return quiescence(board, alpha, beta);
@@ -92,6 +119,16 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
     //create movelist with only legal moves
     std::vector<Move> moves;
     board.generate_legal_moves(moves);
+
+    //if following PV line
+    if (follow_pv) {
+        //enable PV move scoring
+        enable_pv_scoring(moves);
+    }
+
+    // sort after PV flag is set
+    sort_moves(board.curr_state(), moves);
+    score_pv = false;
 
     //loop over moves in move list
     for (int count = 0; count < moves.size(); ++count) {
@@ -170,10 +207,14 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
 }
 
 int search_position(ChessBoard& board, int depth) {
+    //reset variables
     clear_vars();
 
     //iterative deepening
     for (int current_depth = 1; current_depth <= depth; ++current_depth) {
+        //enable follow PV flag
+        follow_pv = true;
+
         //find the best move within a given position
         int score = negamax(board, -50000, 50000, current_depth);
 
@@ -217,4 +258,8 @@ static void clear_vars() {
     memset(history_moves, 0, sizeof(history_moves));
     memset(pv_length, 0, sizeof(pv_length));
     memset(pv_table, 0, sizeof(pv_table));
+
+    //reset follow pv flags
+    follow_pv = false;
+    score_pv = false;
 }
