@@ -23,6 +23,9 @@ using std::uint64_t;
 //Game state
 ChessBoard game = ChessBoard(start_position);
 
+//engine
+bool engine = true;
+
 //for engine config
 constexpr Color ENGINE_SIDE = engine_side;
 constexpr int ENGINE_DEPTH = engine_depth;
@@ -409,7 +412,9 @@ static void mouseclick(double x, double y) { //handles mouse click
                 promote_y = -1;
 
                 //make engine move after user input moves
-                maybe_make_engine_move();
+                if (engine) {
+                    maybe_make_engine_move();
+                }
                 return;
             }
         }
@@ -538,7 +543,9 @@ static void mouseclick(double x, double y) { //handles mouse click
         select_y = -1;
 
         //make engine move after user input moves
-        maybe_make_engine_move();
+        if (engine) {
+            maybe_make_engine_move();
+        }
     } else {
         select_x = click_x;
         select_y = click_y;
