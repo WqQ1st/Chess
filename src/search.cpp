@@ -12,6 +12,9 @@ Move pv_table[max_ply][max_ply];
 bool follow_pv;
 bool score_pv;
 
+const int full_depth_moves = 4;
+const int reduction_limit = 3;
+
 //enable PV move scoring
 static void enable_pv_scoring(std::vector<Move>& moves) {
     //disable following pv
@@ -133,6 +136,8 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
     sort_moves(board.curr_state(), moves);
     score_pv = false;
 
+    bool in_check = board.in_check(board.curr_state().turn);
+
     //loop over moves in move list
     for (int count = 0; count < moves.size(); ++count) {
         //increment ply
@@ -146,8 +151,24 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
 
         //on PV node hit
         if (found_pv) {
-            //move between alpha and beta (PV move)
-            score = -negamax(board, -alpha - 1, -alpha, depth - 1);
+            //condition to consider LMR (late move reduction)
+            if (count >= full_depth_moves &&
+                depth >= reduction_limit &&
+                !in_check &&
+                !board.in_check(board.curr_state().turn) &&
+                !(moves[count].flags() & MF_CAPTURE) &&
+                !(moves[count].promotion())) {
+                //search current move with reduced depth
+                score = -negamax(board, -alpha - 1, -alpha, depth - 2);
+
+                //if reduced search improves alpha, re-search at normal depth
+                if (score > alpha) {
+                    score = -negamax(board, -alpha - 1, -alpha, depth - 1);
+                }
+            } else {
+                //move between alpha and beta (PV move)
+                score = -negamax(board, -alpha - 1, -alpha, depth - 1);
+            }
 
             //a subsequent move was better than the PV move: searches in the normal alpha beta manner
             if ((score > alpha) && (score < beta)) {
@@ -158,6 +179,8 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
             //for all other types of moves, do normal alpha beta search
             score = -negamax(board, -beta, -alpha, depth - 1);
         }
+        
+        
 
         //decrement ply
         ply--;
