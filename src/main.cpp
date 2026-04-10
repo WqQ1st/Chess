@@ -21,7 +21,7 @@ using std::uint8_t;
 using std::uint64_t;
 
 //Game state
-ChessBoard game = ChessBoard(start_position);
+ChessBoard game = ChessBoard(tricky_position);
 
 //engine
 bool engine = true;

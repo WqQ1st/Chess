@@ -234,6 +234,8 @@
             void print_bitboard();
             void print_occupancy();
 
+            void switch_side();
+
             //generates legal moves and fills out them
             void generate_legal_moves(std::vector<Move>& out);
             void generate_legal_captures(std::vector<Move>& out);

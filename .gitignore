@@ -11,7 +11,4 @@ chess
 *.exe
 build/
 
-# Personal notes
-notes.txt
-
 *.o

@@ -14,6 +14,7 @@ extern bool score_pv;
 extern int pv_length[max_ply];
 extern Move pv_table[max_ply][max_ply];
 extern int ply;
+extern int R;
 
 extern const int full_depth_moves;
 extern const int reduction_limit;

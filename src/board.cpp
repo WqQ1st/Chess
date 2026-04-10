@@ -24,6 +24,11 @@ int char_pieces[] = {
     ['k'] = BLACK_KING,
 };
 
+void ChessBoard::switch_side() {
+    BoardState& state = stateStack[stackIndex];
+    state.turn = (state.turn == WHITE) ? BLACK : WHITE;
+}
+
 void ChessBoard::print_bitboard(uint64_t bitboard) {
     for (int rank = 0; rank < 8; ++rank) {        // rank 8 → 1
         for (int file = 0; file < 8; ++file) {    // file A → H

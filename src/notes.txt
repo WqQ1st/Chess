@@ -1,0 +1,40 @@
+//**Board Representation**//
+The board is represented by bitboards, one for each type of piece. Then the chessboard has a stack of boardstates that each store a
+position, and those snapshots are stored within the one chessboard object.
+
+//**Search Algorithm(s)**//
+**Alpha Beta, fail-hard (current implementation)**:
+Alpha is the lower bound; the worst the position eval can be. Beta is the opponent's guaranteed score from elsewhere in the tree, the worst
+eval for the opponent. If playing a move returns beta, abandon that move bc the opponent has a counter/won't allow it. If a move gives
+eval > alpha, then raise it. That means that the position is at least as good as the new alpha eval (assuming best move is played). 
+Removes the need to search branches that are not feasible (eval >= beta, called "fail-hard"). If no better move is found, alpha is returned.
+
+**Negamax Alpha Beta**:
+Uses alpha beta pruning to always recursively maximize the score, but -negamax(board, -beta, -alpha, depth - 1) is called.
+(every layer the side changes so maximize your score, minimize opponent's score) and your floor is their ceiling, your ceiling is their floor
+
+**Quiescence Search**: 
+Used to evaluate position more accurately than static; checks to see if doing nothing beats beta or raises alpha. Then recursively searches
+captures and does static eval after that. solves horizon effect bc it goes through capture sequences and accounts for all hanging pieces.
+Has no depth limit but exits once no captures exist
+
+
+//**Move Sorting**//:
+Putting moves that raise eval the most at the front of the list; then evaluating those moves first causes quicker beta cutoffs and less
+moves to search. Hugely boosts speed
+
+**Killer Moves**:
+Used for move sorting; moves at a certain depth that gave high eval that can be searched early in other lines at the same depth.
+
+**History Moves**:
+Gives value to quiet (non-capture) moves of a certain piece type (ex: white pawn) to a certain square if moving it there raised alpha at
+some point.
+
+**Principal Variation (PV)**:
+Stores the "best" line at each depth and prioritizes those, since they are likely to be strong moves even at a higher depth.
+
+**Principal Variation Search (PVS) and Late Move Reduction (LMR)**
+Principal variation search prioritizes the first move and performs a narrower search window [alpha, alpha + 1] on the rest to increase
+efficiency (it asssumes the previously searched PV move will have the highest evaluation and re-searches if this is wrong). This works 
+since the moves should be sorted with PV moves first, and works with LMR which reduces the depth of the search for moves that are
+late in the move list. If the shallow depth finds a higher evaluation than before (> alpha), it is re-searched at full depth.

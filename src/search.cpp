@@ -4,6 +4,7 @@ int ply = 0; //half move counter from root
 static Move best_move;
 static int nodes = 0;
 
+int R = 2; //constant for null move pruning; Amount of depth reduction for null moves
 
 //init pv length and pv table arrays
 int pv_length[max_ply];
@@ -121,6 +122,33 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
 
     //increment nodes count
     nodes++;
+
+    
+        
+
+    //no pruning: best move: b4c3, # nodes: 3176819
+    //after pruning: best move: b4c3, # nodes: 1442900
+    //null move pruning
+    if (depth >= (R + 1) && !board.in_check(board.curr_state().turn) && ply) {
+        //switch the side to give the opponent a free move
+        board.switch_side();
+        //reset en passant square
+        uint8_t passant_sq = board.curr_state().passantTarget;
+        board.curr_state().passantTarget = 0;
+        
+        //search move with reduced depth to find beta cutoffs
+        int score = -negamax(board, -beta, -beta + 1, depth - 1 - R);
+
+        //restore the position
+        board.switch_side();
+        board.curr_state().passantTarget = passant_sq;
+
+        //fail hard beta cutoff
+        if (score >= beta) {
+            //node/move fails high
+            return beta;
+        }
+    }
 
     //create movelist with only legal moves
     std::vector<Move> moves;
