@@ -122,8 +122,6 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
 
     //increment nodes count
     nodes++;
-
-    
         
 
     //no pruning: best move: b4c3, # nodes: 3176819

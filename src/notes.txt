@@ -18,7 +18,6 @@ Used to evaluate position more accurately than static; checks to see if doing no
 captures and does static eval after that. solves horizon effect bc it goes through capture sequences and accounts for all hanging pieces.
 Has no depth limit but exits once no captures exist
 
-
 //**Move Sorting**//:
 Putting moves that raise eval the most at the front of the list; then evaluating those moves first causes quicker beta cutoffs and less
 moves to search. Hugely boosts speed
@@ -38,3 +37,8 @@ Principal variation search prioritizes the first move and performs a narrower se
 efficiency (it asssumes the previously searched PV move will have the highest evaluation and re-searches if this is wrong). This works 
 since the moves should be sorted with PV moves first, and works with LMR which reduces the depth of the search for moves that are
 late in the move list. If the shallow depth finds a higher evaluation than before (> alpha), it is re-searched at full depth.
+
+**Null Move Pruning**
+Hits beta cutoff by allowing opponent to make a move and evaluating that position on reduced depth BEFORE generating moves. Quick and 
+eliminates positions that are too good to be true. **assumes making no move and passing the turn to the opponent benefits opponent,
+faulty when position is zugzwang**. Only runs when position is not in check.
