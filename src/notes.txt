@@ -18,6 +18,11 @@ Used to evaluate position more accurately than static; checks to see if doing no
 captures and does static eval after that. solves horizon effect bc it goes through capture sequences and accounts for all hanging pieces.
 Has no depth limit but exits once no captures exist
 
+**Iterative Deepening**
+Searches depth 1, 2, ..., depth - 1 before searching at depth in order to populate PV table, killer moves, history heuristic for the next
+iteration. This is quicker than just immediately searching at depth (move sorting is important). Also allows for time management, when
+stopping during an iteration due to time constraints, you can just return the results from the previous depth.
+
 //**Move Sorting**//:
 Putting moves that raise eval the most at the front of the list; then evaluating those moves first causes quicker beta cutoffs and less
 moves to search. Hugely boosts speed
