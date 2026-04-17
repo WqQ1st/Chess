@@ -16,6 +16,7 @@
 #include "constants.h"
 #include <thread>
 #include <chrono>
+#include "zobrist.h"
 
 using std::uint8_t;
 using std::uint64_t;
@@ -636,6 +637,8 @@ void init_all() {
 
     init_sliders_attacks(true);
     init_sliders_attacks(false);
+
+    init_random_keys();
 }
 
 static void maybe_make_engine_move() {
