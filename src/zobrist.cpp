@@ -1,7 +1,6 @@
 #include "zobrist.h"
 #include "board.h"
 #include "attacks.h"
-#include <iostream>
 
 uint64_t piece_keys[12][64];
 uint64_t enpassant_keys[64];
@@ -26,12 +25,12 @@ void init_random_keys() {
     for (int square = 0; square < 64; ++square) {
         //init random en passant squares
         enpassant_keys[square] = get_random_u64_number();
+    }
 
-        //loop over castling keys
-        for (int index = 0; index < 16; ++index) {
-            //init castling keys
-            castle_keys[index] = get_random_u64_number();
-        }
+    //loop over castling keys
+    for (int index = 0; index < 16; ++index) {
+        //init castling keys
+        castle_keys[index] = get_random_u64_number();
     }
 
     //init side key
