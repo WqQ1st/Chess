@@ -131,7 +131,7 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
         //switch the side to give the opponent a free move
         board.switch_side();
         //reset en passant square
-        uint8_t passant_sq = board.curr_state().passantTarget;
+        uint64_t passant_sq = board.curr_state().passantTarget;
         board.curr_state().passantTarget = 0;
         
         //search move with reduced depth to find beta cutoffs
