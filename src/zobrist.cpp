@@ -19,8 +19,22 @@ void init_random_keys() {
         for (int square = 0; square < 64; ++square) {
             //init random piece keys
             piece_keys[piece][square] = get_random_u64_number();
-            std::cout << piece_keys[piece][square] << std::endl;
         }
     }
+
+    //loop over board squares
+    for (int square = 0; square < 64; ++square) {
+        //init random en passant squares
+        enpassant_keys[square] = get_random_u64_number();
+
+        //loop over castling keys
+        for (int index = 0; index < 16; ++index) {
+            //init castling keys
+            castle_keys[index] = get_random_u64_number();
+        }
+    }
+
+    //init side key
+    side_key = get_random_u64_number();
 }
 

@@ -638,6 +638,7 @@ void init_all() {
     init_sliders_attacks(true);
     init_sliders_attacks(false);
 
+    //init random keys
     init_random_keys();
 }
 
