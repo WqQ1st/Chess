@@ -5,6 +5,7 @@
 #include "bitboards.h"
 #include "square.h"
 #include "movegen.h"
+#include "zobrist.h"
 
 using std::uint8_t;
 using std::uint64_t;
