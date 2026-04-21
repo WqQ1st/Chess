@@ -24,6 +24,10 @@ int char_pieces[] = {
     ['k'] = BLACK_KING,
 };
 
+uint64_t BoardState::compute_hash() const {
+    return 0;
+}
+
 void ChessBoard::switch_side() {
     BoardState& state = stateStack[stackIndex];
     state.turn = (state.turn == WHITE) ? BLACK : WHITE;
@@ -237,6 +241,7 @@ void ChessBoard::move(const Move& move) {
     st.ply++;
 
     st.update_occupancies();
+    st.hash_key = st.compute_hash();
 }
 
 void ChessBoard::undo() {
@@ -399,6 +404,7 @@ BoardState ChessBoard::parse_fen(const char* fen) {
     }
 
     s.update_occupancies();
+    s.compute_hash();
     return s;
 }
 

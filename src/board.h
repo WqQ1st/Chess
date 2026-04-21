@@ -174,6 +174,12 @@
         //number of half moves
         int ply = 0;
 
+        //(hopefully) unique hashkey
+        uint64_t hash_key = 0;
+
+        //calculate hash
+        uint64_t compute_hash() const;
+
         //update occupancies to reflect current board
         void update_occupancies() {
             occupancies[WHITE] = 0ULL;
