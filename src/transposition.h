@@ -26,8 +26,8 @@ class TranspositionTable {
     public:
         void resize(size_t mb);
         void clear();
-        void store(uint64_t key, int depth, int value, int flag, Move best);
-        bool probe(uint64_t key, int depth, int alpha, int beta, int& value, Move& best) const;
+        void store(uint64_t key, int depth, int value, int flag);
+        bool probe(uint64_t key, int depth, int alpha, int beta, int& value) const;
 
     private:
         TTEntry table[HASH_SIZE];
