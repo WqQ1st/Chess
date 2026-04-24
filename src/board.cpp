@@ -182,18 +182,25 @@ void ChessBoard::move(const Move& move) {
     uint64_t fromBoard = uint64_t(1) << move.from();
     uint64_t toBoard = uint64_t(1) << move.to();
 
-
     //move a piece and store which type (ex: white pawn)
     uint8_t movedPiece = move.piece();
 
     BoardState& st = stateStack[stackIndex];
 
+    //copy hash key of prev position
     st.hash_key = stateStack[stackIndex - 1].hash_key;
+
+    //hash side
+    st.hash_key ^= side_key;
 
     st.bitboards[movedPiece] ^= (fromBoard | toBoard);
 
-    int capturedPiece = EMPTY;
+    //hash (remove from source square and put it on target square)
+    st.hash_key ^= piece_keys[movedPiece][move.from()]; //remove piece from source square
+    st.hash_key ^= piece_keys[movedPiece][move.to()];   //add piece to target square
 
+
+    int capturedPiece = EMPTY;
 
     //capture a piece (could be a lil slow if en passant, since en passant sets capture flag rn)
     if (move.flags() & MF_CAPTURE) {
@@ -201,6 +208,7 @@ void ChessBoard::move(const Move& move) {
             if (st.bitboards[i] & toBoard) {
                 st.bitboards[i] ^= toBoard;
                 capturedPiece = i;
+                st.hash_key ^= piece_keys[capturedPiece][move.to()]; //remove the piece from hash key
                 break;
             }
         }
@@ -226,25 +234,46 @@ void ChessBoard::move(const Move& move) {
         }
     }
 
+    
+
     //set en-passant target
     if (move.flags() & MF_DOUBLE) {
         st.passantTarget = uint64_t(1) << int((move.from() + move.to()) * 0.5); //target en passant sq is halfway btwn to and from squares
+        
     } else {
         st.passantTarget = 0;
     }
+
+    //hash enpassant
+    st.hash_key ^= enpassant_keys[st.passantTarget];
     
     //castle move: king moved two squares, so move rook too; generate moves alr checks legality of castling
     if (move.flags() & MF_CASTLE) {
         if (move.to() == G1) {
             st.bitboards[WHITE_ROOK] ^= (BB(H1) | BB(F1));
+            //hash rook
+            st.hash_key ^= piece_keys[WHITE_ROOK][H1];
+            st.hash_key ^= piece_keys[WHITE_ROOK][F1];
         } else if (move.to() == C1) {
             st.bitboards[WHITE_ROOK] ^= (BB(A1) | BB(D1));
+            //hash rook
+            st.hash_key ^= piece_keys[WHITE_ROOK][A1];
+            st.hash_key ^= piece_keys[WHITE_ROOK][D1];
         } else if (move.to() == G8) {
             st.bitboards[BLACK_ROOK] ^= (BB(H8) | BB(F8));
+            //hash rook
+            st.hash_key ^= piece_keys[BLACK_ROOK][H8];
+            st.hash_key ^= piece_keys[BLACK_ROOK][F8];
         } else if (move.to() == C8) {
             st.bitboards[BLACK_ROOK] ^= (BB(A8) | BB(D8));
+            //hash rook
+            st.hash_key ^= piece_keys[BLACK_ROOK][A8];
+            st.hash_key ^= piece_keys[BLACK_ROOK][D8];
         }
     }
+
+    //hash castling
+    st.hash_key ^= castle_keys[st.castle];
 
     //update castling rights
     //king moved: lose both rights
@@ -260,6 +289,8 @@ void ChessBoard::move(const Move& move) {
         if (fromBoard & BB(H8)) st.castle &= ~bk;
         if (fromBoard & BB(A8)) st.castle &= ~bq;
     }
+
+    st.hash_key ^= castle_keys[st.castle];
 
     //promotions
     if (move.promotion() != EMPTY) {
