@@ -229,8 +229,10 @@ void ChessBoard::move(const Move& move) {
     if (move.flags() & MF_ENPASSANT) {
         if (movedPiece == WHITE_PAWN) {
             st.bitboards[BLACK_PAWN] ^= st.passantTarget << 8; //deletes square in front of en passant target square
+            st.hash_key ^= piece_keys[BLACK_PAWN][move.to() + 8];
         } else if (movedPiece == BLACK_PAWN) {
             st.bitboards[WHITE_PAWN] ^= st.passantTarget >> 8; //deletes square in front of en passant target square
+            st.hash_key ^= piece_keys[WHITE_PAWN][move.to() - 8];
         }
     }
 
@@ -239,13 +241,16 @@ void ChessBoard::move(const Move& move) {
     //set en-passant target
     if (move.flags() & MF_DOUBLE) {
         st.passantTarget = uint64_t(1) << int((move.from() + move.to()) * 0.5); //target en passant sq is halfway btwn to and from squares
-        
     } else {
         st.passantTarget = 0;
     }
 
     //hash enpassant
-    st.hash_key ^= enpassant_keys[st.passantTarget];
+    if (st.passantTarget) {
+        uint64_t ep = st.passantTarget;
+        int passant = pop_lsb(ep);
+        st.hash_key ^= enpassant_keys[passant];
+    }
     
     //castle move: king moved two squares, so move rook too; generate moves alr checks legality of castling
     if (move.flags() & MF_CASTLE) {
@@ -295,7 +300,9 @@ void ChessBoard::move(const Move& move) {
     //promotions
     if (move.promotion() != EMPTY) {
         st.bitboards[movedPiece] ^= toBoard;          // remove pawn that just landed
+        st.hash_key ^= piece_keys[movedPiece][move.to()];
         st.bitboards[move.promotion()] ^= toBoard;    // add promoted piece
+        st.hash_key ^= piece_keys[move.promotion()][move.to()];
     }
 
     //switch turns
@@ -308,7 +315,9 @@ void ChessBoard::move(const Move& move) {
     st.ply++;
 
     st.update_occupancies();
-    st.hash_key = st.compute_hash();
+
+    //hash key is copied and incrementally updated, so this is not necessary
+    //st.hash_key = st.compute_hash();
 }
 
 void ChessBoard::undo() {
