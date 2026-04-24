@@ -37,7 +37,7 @@ some point.
 **Principal Variation (PV)**:
 Stores the "best" line at each depth and prioritizes those, since they are likely to be strong moves even at a higher depth.
 
-**Principal Variation Search (PVS) and Late Move Reduction (LMR)**
+**Principal Variation Search (PVS) and Late Move Reduction (LMR)**:
 Principal variation search prioritizes the first move and performs a narrower search window [alpha, alpha + 1] on the rest to increase
 efficiency (it asssumes the previously searched PV move will have the highest evaluation and re-searches if this is wrong). This works 
 since the moves should be sorted with PV moves first, and works with LMR which reduces the depth of the search for moves that are
@@ -47,3 +47,14 @@ late in the move list. If the shallow depth finds a higher evaluation than befor
 Hits beta cutoff by allowing opponent to make a move and evaluating that position on reduced depth BEFORE generating moves. Quick and 
 eliminates positions that are too good to be true. **assumes making no move and passing the turn to the opponent benefits opponent,
 faulty when position is zugzwang**. Only runs when position is not in check.
+
+//**Zobrist Hashing**//
+
+**Hashing Method**:
+The board is represented by a hopefully unique hash key. Each attribute (piece positions, castling flag, en passant, etc) is represented by
+an unsigned 64bit int random hash key stored in a table. These keys are XORed and stored as one single uint64, which is the hash key for a
+given position.
+
+**Transposition Table (TT)**:
+The transposition table stores these positions as entries indexed by the zobrist key % (table size) and can be referenced to quickly recover
+the scores of positions that have already been searched. This is also used for storing the best move, but I haven't gotten to that yet.
