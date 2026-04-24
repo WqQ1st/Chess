@@ -677,7 +677,7 @@ int main() {
 
     game.generate_legal_moves(legal);
 
-    std::cout << game.curr_state().hash_key << std::endl;
+    //std::cout << game.curr_state().hash_key << std::endl;
 
     /*//testing using prints
     for (int i = 7; i < 20; ++i) {

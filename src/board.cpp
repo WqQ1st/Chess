@@ -175,8 +175,6 @@ void ChessBoard::setPiece(uint8_t piece, uint8_t square) {
 //make move on board
 void ChessBoard::move(const Move& move) {
 
-    //distinguish btwn quiet and capture moves
-
     //push a new state onto the stack
     stackIndex++;
     stateStack[stackIndex] = stateStack[stackIndex - 1];
@@ -188,7 +186,9 @@ void ChessBoard::move(const Move& move) {
     //move a piece and store which type (ex: white pawn)
     uint8_t movedPiece = move.piece();
 
-    auto& st = stateStack[stackIndex];
+    BoardState& st = stateStack[stackIndex];
+
+    st.hash_key = stateStack[stackIndex - 1].hash_key;
 
     st.bitboards[movedPiece] ^= (fromBoard | toBoard);
 
