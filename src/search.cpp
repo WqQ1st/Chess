@@ -1,4 +1,5 @@
 #include "search.h"
+#include "zobrist.h"
 
 int ply = 0; //half move counter from root
 static Move best_move;
@@ -131,15 +132,26 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
         //switch the side to give the opponent a free move
         board.switch_side();
         //reset en passant square
-        uint64_t passant_sq = board.curr_state().passantTarget;
-        board.curr_state().passantTarget = 0;
+        BoardState& state = board.curr_state();
+        uint64_t passant_sq = state.passantTarget;
+        if (passant_sq) {
+            int passant = get_ls1b_index(state.passantTarget);
+            //hash out the en passant sq
+            state.hash_key ^= enpassant_keys[passant];
+        }
+        state.passantTarget = 0;
         
         //search move with reduced depth to find beta cutoffs
         int score = -negamax(board, -beta, -beta + 1, depth - 1 - R);
 
         //restore the position
         board.switch_side();
-        board.curr_state().passantTarget = passant_sq;
+        state.passantTarget = passant_sq;
+        if (passant_sq) {
+            int passant = get_ls1b_index(state.passantTarget);
+            //restore hash of the en passant sq
+            state.hash_key ^= enpassant_keys[passant];
+        }
 
         //fail hard beta cutoff
         if (score >= beta) {

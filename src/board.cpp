@@ -203,6 +203,9 @@ void ChessBoard::move(const Move& move) {
 
     int capturedPiece = EMPTY;
 
+    //hash out prev castling rights
+    st.hash_key ^= castle_keys[st.castle];
+
     //capture a piece (could be a lil slow if en passant, since en passant sets capture flag rn)
     if (move.flags() & MF_CAPTURE) {
         for (int i = st.turn == WHITE ? 6 : 0; i < (st.turn == WHITE ? 11 : 5); ++i) {
@@ -213,6 +216,7 @@ void ChessBoard::move(const Move& move) {
                 break;
             }
         }
+
 
         //rook captured on its home square: lose that side
         if (capturedPiece == WHITE_ROOK) {
@@ -285,8 +289,6 @@ void ChessBoard::move(const Move& move) {
         }
     }
 
-    //hash castling
-    st.hash_key ^= castle_keys[st.castle];
 
     //update castling rights
     //king moved: lose both rights
@@ -303,6 +305,7 @@ void ChessBoard::move(const Move& move) {
         if (fromBoard & BB(A8)) st.castle &= ~bq;
     }
 
+    //add new castling rights
     st.hash_key ^= castle_keys[st.castle];
 
     //promotions
@@ -324,9 +327,12 @@ void ChessBoard::move(const Move& move) {
 
     st.update_occupancies();
 
-    //hash key is copied and incrementally updated, so this is not necessary
-    //st.hash_key = st.compute_hash();
-    std::cout << "comparing incremental hash to fully computed:" << (st.hash_key == st.compute_hash()) << std::endl;
+    /*
+    //check to see if compute hash agrees with incremental hashing
+    if (!st.hash_key == st.compute_hash()) {
+        std::cout << "incremental and computed hash don't agree" << std::endl;
+    }
+    */
 }
 
 void ChessBoard::undo() {

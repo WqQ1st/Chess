@@ -5,6 +5,7 @@
 #include "eval.h"
 #include "movegen.h"
 #include "constants.h"
+#include "board.h"
 
 #include <iostream>
 
