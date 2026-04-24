@@ -52,6 +52,14 @@ uint64_t BoardState::compute_hash() const {
         final_key ^= enpassant_keys[passant];
     }
 
+    //hash castling rights
+    final_key ^= castle_keys[castle];
+
+    //hash the side to move if black is to move
+    if (turn == BLACK) {
+        final_key ^= side_key;
+    }
+
     //return generated hash key
     return final_key;
 }
