@@ -67,6 +67,7 @@ uint64_t BoardState::compute_hash() const {
 void ChessBoard::switch_side() {
     BoardState& state = stateStack[stackIndex];
     state.turn = (state.turn == WHITE) ? BLACK : WHITE;
+    state.hash_key ^= side_key;
 }
 
 void ChessBoard::print_bitboard(uint64_t bitboard) {
@@ -245,6 +246,13 @@ void ChessBoard::move(const Move& move) {
         st.passantTarget = 0;
     }
 
+    //remove old passant hash
+    if (stackIndex > 0 && stateStack[stackIndex - 1].passantTarget) {
+        uint64_t ep = stateStack[stackIndex - 1].passantTarget;
+        int passant = pop_lsb(ep);
+        st.hash_key ^= enpassant_keys[passant];
+    }
+
     //hash enpassant
     if (st.passantTarget) {
         uint64_t ep = st.passantTarget;
@@ -318,6 +326,7 @@ void ChessBoard::move(const Move& move) {
 
     //hash key is copied and incrementally updated, so this is not necessary
     //st.hash_key = st.compute_hash();
+    std::cout << "comparing incremental hash to fully computed:" << (st.hash_key == st.compute_hash()) << std::endl;
 }
 
 void ChessBoard::undo() {
