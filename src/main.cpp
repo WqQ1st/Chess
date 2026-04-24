@@ -640,6 +640,8 @@ void init_all() {
 
     //init random keys
     init_random_keys();
+
+    game.curr_state().hash_key = game.curr_state().compute_hash();
 }
 
 static void maybe_make_engine_move() {
@@ -674,6 +676,8 @@ int main() {
     init_all();
 
     game.generate_legal_moves(legal);
+
+    std::cout << game.curr_state().hash_key << std::endl;
 
     /*//testing using prints
     for (int i = 7; i < 20; ++i) {

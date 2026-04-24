@@ -25,8 +25,35 @@ int char_pieces[] = {
     ['k'] = BLACK_KING,
 };
 
+//generate hopefully unique position ID/hash key
 uint64_t BoardState::compute_hash() const {
-    return 0;
+    uint64_t final_key = 0ULL;
+
+    //temp piece bitboard copy
+    uint64_t bitboard;
+
+    //loop over piece bitboards
+    for (int piece = WHITE_PAWN; piece <= BLACK_KING; ++piece) {
+        bitboard = bitboards[piece];
+        //loop over the pieces within the bitboard
+        while (bitboard) {
+            //pop LS1B, square occupied by the piece
+            int square = pop_lsb(bitboard);
+
+            //hash piece
+            final_key ^= piece_keys[piece][square];
+        }
+    }
+
+    //is en passant is on board
+    if (passantTarget) {
+        uint64_t ep = passantTarget;
+        int passant = pop_lsb(ep);
+        final_key ^= enpassant_keys[passant];
+    }
+
+    //return generated hash key
+    return final_key;
 }
 
 void ChessBoard::switch_side() {
@@ -405,7 +432,7 @@ BoardState ChessBoard::parse_fen(const char* fen) {
     }
 
     s.update_occupancies();
-    s.compute_hash();
+    s.hash_key = s.compute_hash();
     return s;
 }
 
