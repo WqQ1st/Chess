@@ -306,7 +306,7 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
 
     //node (move) fails low
     tt.store(board.curr_state().hash_key, depth, alpha, hash_flag);
-    return alpha;
+    return score;
 }
 
 int search_position(ChessBoard& board, int depth) {
