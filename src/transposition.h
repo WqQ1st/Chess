@@ -6,6 +6,8 @@
 
 //hash table size
 #define HASH_SIZE 0x400000
+//no hash entry found constant
+#define NO_HASH 100000
 
 enum HashFlag {
     HASH_EXACT = 0,

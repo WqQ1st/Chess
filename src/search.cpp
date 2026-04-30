@@ -1,5 +1,6 @@
 #include "search.h"
 #include "zobrist.h"
+#include "transposition.h"
 
 int ply = 0; //half move counter from root
 static Move best_move;
@@ -16,6 +17,9 @@ bool score_pv;
 
 const int full_depth_moves = 4;
 const int reduction_limit = 3;
+
+//initialize TT
+static TranspositionTable tt;
 
 //enable PV move scoring
 static void enable_pv_scoring(std::vector<Move>& moves) {
@@ -99,6 +103,12 @@ static int quiescence(ChessBoard& board, int alpha, int beta) {
 
 //negamax alpha beta search
 static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
+    //declare score variable (from the static evaluation perspective)
+    int score;
+
+    //define hash flag
+    int hash_flag = HASH_ALPHA;
+
     //define find PV node variable
     bool found_pv = false;
 
@@ -108,6 +118,12 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
     // Extend search by 1 if the side to move is in check
     if (board.in_check(board.curr_state().turn)) {
         depth++;
+    }
+
+    //read hash entry and if the move has already been searched, return the score without searching.
+    if (ply && tt.probe(board.curr_state().hash_key, depth, alpha, beta, score)) {
+        //return the score
+        return score;
     }
 
     if (depth == 0) {
@@ -156,6 +172,7 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
         //fail hard beta cutoff
         if (score >= beta) {
             //node/move fails high
+            tt.store(board.curr_state().hash_key, depth, beta, HASH_BETA);
             return beta;
         }
     }
@@ -183,9 +200,6 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
 
         //make the move
         board.move(moves[count]);
-
-        //declare score variable (from the static evaluation perspective)
-        int score;
 
         //on PV node hit
         if (found_pv) {
@@ -228,6 +242,9 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
 
         //fail-hard beta cutoff
         if (score >= beta) {
+            //store hash entry with the score equal to beta
+            tt.store(board.curr_state().hash_key, depth, beta, HASH_BETA);
+
             //for only quiet moves
             if (!(moves[count].flags() & MF_CAPTURE)) {
                 //store killer moves
@@ -241,6 +258,9 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
 
         //found a better move
         if (score > alpha) {
+            //switch hash flag to storing PV node
+            hash_flag = HASH_EXACT;
+
             //for only quiet moves
             if (!(moves[count].flags() & MF_CAPTURE)) {
                 //store history moves, gives slightly higher score for moves that were better than alpha
@@ -276,15 +296,16 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
     if (moves.size() == 0) {
         if (board.in_check(board.curr_state().turn)) {
             //return mating score
-            return -49000 + ply;
+            score = -49000 + ply;
         } else {
             //return stalemate score
-            return 0;
+            score = 0;
         }
     }
 
 
     //node (move) fails low
+    tt.store(board.curr_state().hash_key, depth, alpha, hash_flag);
     return alpha;
 }
 
