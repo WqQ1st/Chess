@@ -301,17 +301,22 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
             //return stalemate score
             score = 0;
         }
+
+        tt.store(board.curr_state().hash_key, depth, score, HASH_EXACT);
+        return score;
     }
 
 
     //node (move) fails low
     tt.store(board.curr_state().hash_key, depth, alpha, hash_flag);
-    return score;
+    return alpha;
 }
 
 int search_position(ChessBoard& board, int depth) {
     //reset variables
     clear_vars();
+
+    int score = 0;
 
     //iterative deepening
     for (int current_depth = 1; current_depth <= depth; ++current_depth) {
@@ -319,7 +324,7 @@ int search_position(ChessBoard& board, int depth) {
         follow_pv = true;
 
         //find the best move within a given position
-        int score = negamax(board, -50000, 50000, current_depth);
+        score = negamax(board, -50000, 50000, current_depth);
 
         for (int count = 0; count < pv_length[0]; ++count) {
             //print pv move
@@ -330,8 +335,7 @@ int search_position(ChessBoard& board, int depth) {
 
     std::cout << "best move: " << best_move.to_string() << std::endl;
 
-    //placeholder
-    return 1;
+    return score;
 }
 
 void search_and_print(ChessBoard& board, int depth) {
