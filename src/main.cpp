@@ -8,7 +8,7 @@
 #include "attacks.h"
 #include "square.h"
 #include "movegen.h"
-#include "time.h"
+#include "enginetime.h"
 #include "perft.h"
 #include "eval.h"
 #include "search.h"

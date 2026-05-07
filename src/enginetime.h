@@ -1,5 +1,5 @@
-#ifndef TIME_H
-#define TIME_H
+#ifndef ENGINETIME_H
+#define ENGINETIME_H
 
 #include <cstdint>
 

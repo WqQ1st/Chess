@@ -209,7 +209,7 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
                 !in_check &&
                 !board.in_check(board.curr_state().turn) &&
                 !(moves[count].flags() & MF_CAPTURE) &&
-                !(moves[count].promotion())) {
+                (moves[count].promotion() == EMPTY)) {
                 //search current move with reduced depth
                 score = -negamax(board, -alpha - 1, -alpha, depth - 2);
 
