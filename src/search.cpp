@@ -120,6 +120,12 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
         depth++;
     }
 
+    //check for draw (minus stalemate, which has to generate legal moves)
+    if (board.is_fifty_move_draw() || board.is_threefold_repetition() || board.is_insufficient_material()) {
+        //draw is 0 eval
+        return 0;
+    }
+
     //read hash entry and if the move has already been searched, return the score without searching.
     if (ply && tt.probe(board.curr_state().hash_key, depth, alpha, beta, score)) {
         //return the score
@@ -137,11 +143,6 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
         return evaluate(board);
     }
 
-    //check for draw (minus stalemate, which has to generate legal moves)
-    if (board.is_fifty_move_draw() || board.is_threefold_repetition() || board.is_insufficient_material()) {
-        //draw is 0 eval
-        return 0;
-    }
 
     //increment nodes count
     nodes++;
