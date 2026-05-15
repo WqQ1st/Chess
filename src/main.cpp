@@ -367,6 +367,10 @@ static void draw() {
 
 
 static void mouseclick(double x, double y) { //handles mouse click
+    if (game.is_checkmate() || game.is_draw()) {
+        std::cout << "game over" << std::endl;
+        return;
+    }
     /*
     std::cout << "all moves for " << int(game.curr_state().turn) << ": " << std::endl;
     for (const auto& m : moves) {
@@ -645,13 +649,13 @@ void init_all() {
 }
 
 static void maybe_make_engine_move() {
-    if (promote_y != -1 || game.curr_state().turn != ENGINE_SIDE) {
-        return; 
+    if (game.is_checkmate() || game.is_draw()) {
+        std::cout << "game over" << std::endl;
+        return;
     }
 
-    game.generate_legal_moves(legal);
-    if (legal.empty()) {
-        return;
+    if (promote_y != -1 || game.curr_state().turn != ENGINE_SIDE) {
+        return; 
     }
 
     draw();
@@ -662,6 +666,11 @@ static void maybe_make_engine_move() {
 }
 
 static void make_engine_move() {
+    if (game.is_checkmate() || game.is_draw()) {
+        std::cout << "game over" << std::endl;
+        return;
+    }
+
     Move best = find_best_move(game, ENGINE_DEPTH);
 
     moveStack[moveIndex] = best;

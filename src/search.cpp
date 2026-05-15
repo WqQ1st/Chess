@@ -377,3 +377,8 @@ static void clear_vars() {
     follow_pv = false;
     score_pv = false;
 }
+
+//clear TT
+void clear_transposition_table() {
+    tt.clear();
+}

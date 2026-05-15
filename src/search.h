@@ -32,5 +32,6 @@ void print_nodes();
 
 static void clear_vars();
 
+void clear_transposition_table();
 
 #endif

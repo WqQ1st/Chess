@@ -7,6 +7,7 @@
 #include "movegen.h"
 #include "zobrist.h"
 #include <algorithm>
+#include "search.h"
 
 using std::uint8_t;
 using std::uint64_t;
@@ -514,6 +515,7 @@ void ChessBoard::generate_legal_captures(std::vector<Move>& out) {
 
 //parse FEN string
 BoardState ChessBoard::parse_fen(const char* fen) {
+    clear_transposition_table();
     BoardState s{};
 
     int rank = 0; // 0 is rank 8
