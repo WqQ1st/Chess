@@ -22,10 +22,10 @@ using std::uint8_t;
 using std::uint64_t;
 
 //Game state
-ChessBoard game = ChessBoard(tricky_position);
+ChessBoard game = ChessBoard(start_position);
 
 //engine
-bool engine = true;
+bool engine = false;
 
 //for engine config
 constexpr Color ENGINE_SIDE = engine_side;
@@ -564,6 +564,9 @@ static void keydown(int key) {
     } else if (key == GLFW_KEY_X) {
         flipBoard();
     } else if ((key == GLFW_KEY_Z || key == GLFW_KEY_LEFT) && moveIndex > 0) {
+        promote_x = -1;
+        promote_y = -1;
+        pending.active = false;
         game.undo();
         --moveIndex;
         game.generate_legal_moves(legal);

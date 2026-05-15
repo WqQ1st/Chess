@@ -515,7 +515,6 @@ void ChessBoard::generate_legal_captures(std::vector<Move>& out) {
 
 //parse FEN string
 BoardState ChessBoard::parse_fen(const char* fen) {
-    clear_transposition_table();
     BoardState s{};
 
     int rank = 0; // 0 is rank 8
