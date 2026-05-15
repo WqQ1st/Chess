@@ -6,6 +6,7 @@
 #include "square.h"
 #include "movegen.h"
 #include "zobrist.h"
+#include <algorithm>
 
 using std::uint8_t;
 using std::uint64_t;
@@ -400,6 +401,80 @@ bool ChessBoard::is_stalemate() {
     return moves.empty();
 }
 
+bool ChessBoard::is_fifty_move_draw() const {
+    return curr_state().half_moves >= 100;
+}
+
+bool ChessBoard::is_threefold_repetition() const {
+    uint64_t key = curr_state().hash_key;
+    int count = 0;
+
+    //stack might not contain all positions since last capture/pawn move since could FEN into a position
+    int start = std::max(0, stackIndex - curr_state().half_moves);
+
+    for (int i = start; i < stackIndex; ++i) {
+        if (stateStack[i].hash_key == key) {
+            count++;
+        }
+    }
+    return count >= 2;
+}
+
+bool ChessBoard::is_insufficient_material() const {
+    const BoardState& st = curr_state();
+
+    //any pawn, rook, or queen means mating material exists
+    if (st.bitboards[WHITE_PAWN] || st.bitboards[BLACK_PAWN] ||
+        st.bitboards[WHITE_ROOK] || st.bitboards[BLACK_ROOK] ||
+        st.bitboards[WHITE_QUEEN] || st.bitboards[BLACK_QUEEN]) {
+        return false;
+    }
+
+    int b = count_bits(st.bitboards[WHITE_BISHOP]);
+    int B = count_bits(st.bitboards[BLACK_BISHOP]);
+    int n = count_bits(st.bitboards[WHITE_KNIGHT]);
+    int N = count_bits(st.bitboards[BLACK_KNIGHT]);
+
+    //total minor pieces <= 1, can't checkmate
+    if (b + B + n + N <= 1) {
+        return true;
+    }
+
+    //if only bishops on the board
+    if (n + N == 0) {
+        //draw if all bishops on board are same color
+        uint64_t wb = st.bitboards[WHITE_BISHOP];
+        uint64_t bb = st.bitboards[BLACK_BISHOP];
+        //used to compare square colors
+        auto square_color = [](int sq) {
+            return ((sq / 8) + (sq % 8)) & 1;
+        };
+        int color;
+        if (wb) {
+            color = square_color(pop_lsb(wb));
+        } else {
+            color = square_color(pop_lsb(bb));
+        }
+        while (wb) {
+            if (square_color(pop_lsb(wb)) != color) {
+                return false;
+            }
+        }
+        while (bb) {
+            if (square_color(pop_lsb(bb)) != color) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    return false;
+}
+
+bool ChessBoard::is_draw() {
+    return is_stalemate() || is_fifty_move_draw() || is_threefold_repetition() || is_insufficient_material();
+}
+
 
 uint8_t ChessBoard::king_square(int side) {
     const BoardState& st = curr_state();
@@ -529,6 +604,7 @@ BoardState ChessBoard::parse_fen(const char* fen) {
 BoardState& ChessBoard::curr_state() {
     return stateStack[stackIndex];
 }
+
 
 const BoardState& ChessBoard::curr_state() const {
     return stateStack[stackIndex];

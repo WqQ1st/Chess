@@ -265,6 +265,19 @@
             //returns true if king is in stalemate
             bool is_stalemate();
 
+            //returns true if 50 move rule draw
+            bool is_fifty_move_draw() const;
+
+            //returns true if position repeated 3 times, results in draw
+            bool is_threefold_repetition() const;
+
+            //returns true if insufficient material --> automatic draw
+            bool is_insufficient_material() const;
+
+            //returns true if game is a draw
+            bool is_draw();
+            
+
             //returns king square
             uint8_t king_square(int side);
 
