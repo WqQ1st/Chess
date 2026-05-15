@@ -174,6 +174,9 @@
         //number of half moves
         int ply = 0;
 
+        //counting half moves for 50 move rule
+        int half_moves = 0;
+
         //(hopefully) unique hashkey
         uint64_t hash_key = 0;
 

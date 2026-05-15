@@ -325,6 +325,12 @@ void ChessBoard::move(const Move& move) {
 
     st.ply++;
 
+    if (move.piece() == WHITE_PAWN || move.piece() == BLACK_PAWN || (move.flags() & MoveFlag::MF_CAPTURE)) {
+        st.half_moves = 0;
+    } else {
+        st.half_moves++;
+    }
+
     st.update_occupancies();
 
     /*
@@ -481,7 +487,9 @@ BoardState ChessBoard::parse_fen(const char* fen) {
         else if (*fen == 'q') s.castle |= bq;
         fen++;
     }
-    while (*fen == ' ') fen++;
+    while (*fen == ' ') {
+        fen++;
+    }
 
     s.passantTarget = 0;
     if (*fen != '-') {
@@ -493,6 +501,24 @@ BoardState ChessBoard::parse_fen(const char* fen) {
     } else {
         fen++;
     }
+
+    while (*fen == ' ') {
+        fen++;
+    }
+
+    int half_moves = 0;
+    while (*fen != ' ') {
+        if (*fen >= '0' && *fen <= '9') {
+            half_moves = half_moves * 10 + (*fen - '0');
+        }
+        fen++;
+    }
+    if (half_moves > 100) {
+        half_moves = 100;
+    }
+
+    s.half_moves = half_moves;
+
 
     s.update_occupancies();
     s.hash_key = s.compute_hash();
