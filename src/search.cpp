@@ -1,10 +1,17 @@
 #include "search.h"
+#include "enginetime.h"
 #include "zobrist.h"
 #include "transposition.h"
 
 int ply = 0; //half move counter from root
 static Move best_move;
+static Move last_completed_best_move;
 static int nodes = 0;
+static bool use_time_limit = false;
+static uint64_t search_stop_time = 0;
+static bool stop_search = false;
+static bool output_uci_info = false;
+static uint64_t search_start_time = 0;
 
 int R = 2; //constant for null move pruning; Amount of depth reduction for null moves
 
@@ -20,6 +27,32 @@ const int reduction_limit = 3;
 
 //initialize TT
 static TranspositionTable tt;
+
+static void check_time() {
+    if (use_time_limit && (nodes & 2047) == 0 && get_time_ms() >= search_stop_time) {
+        stop_search = true;
+    }
+}
+
+static void print_pv_line(int depth, int score) {
+    if (output_uci_info) {
+        uint64_t elapsed = get_time_ms() - search_start_time;
+        std::cout << "info depth " << depth
+                  << " score cp " << score
+                  << " nodes " << nodes
+                  << " time " << elapsed
+                  << " pv";
+        for (int count = 0; count < pv_length[0]; ++count) {
+            std::cout << " " << pv_table[0][count].to_string();
+        }
+        std::cout << "\n";
+    } else {
+        for (int count = 0; count < pv_length[0]; ++count) {
+            std::cout << pv_table[0][count].to_string() << " ";
+        }
+        std::cout << std::endl;
+    }
+}
 
 //enable PV move scoring
 static void enable_pv_scoring(std::vector<Move>& moves) {
@@ -43,6 +76,11 @@ static void enable_pv_scoring(std::vector<Move>& moves) {
 static int quiescence(ChessBoard& board, int alpha, int beta) {
     //increment nodes count
     nodes++;
+    check_time();
+
+    if (stop_search) {
+        return 0;
+    }
 
     //evaluate position
     int eval = evaluate(board);
@@ -79,6 +117,10 @@ static int quiescence(ChessBoard& board, int alpha, int beta) {
         //take back the move
         board.undo();
 
+        if (stop_search) {
+            return 0;
+        }
+
         //fail-hard beta cutoff
         if (score >= beta) {
             //node (move) fails high
@@ -103,6 +145,10 @@ static int quiescence(ChessBoard& board, int alpha, int beta) {
 
 //negamax alpha beta search
 static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
+    if (stop_search) {
+        return 0;
+    }
+
     //declare score variable (from the static evaluation perspective)
     int score;
 
@@ -146,6 +192,11 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
 
     //increment nodes count
     nodes++;
+    check_time();
+
+    if (stop_search) {
+        return 0;
+    }
         
 
     //no pruning: best move: b4c3, # nodes: 3176819
@@ -174,6 +225,10 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
             int passant = get_ls1b_index(state.passantTarget);
             //restore hash of the en passant sq
             state.hash_key ^= enpassant_keys[passant];
+        }
+
+        if (stop_search) {
+            return 0;
         }
 
         //fail hard beta cutoff
@@ -246,6 +301,10 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
 
         //take back the move
         board.undo();
+
+        if (stop_search) {
+            return 0;
+        }
 
         //fail-hard beta cutoff
         if (score >= beta) {
@@ -322,6 +381,14 @@ static int negamax(ChessBoard& board, int alpha, int beta, int depth) {
 int search_position(ChessBoard& board, int depth) {
     //reset variables
     clear_vars();
+    search_start_time = get_time_ms();
+
+    std::vector<Move> legal_moves;
+    board.generate_legal_moves(legal_moves);
+    if (!legal_moves.empty()) {
+        best_move = legal_moves[0];
+        last_completed_best_move = legal_moves[0];
+    }
 
     int score = 0;
 
@@ -333,14 +400,18 @@ int search_position(ChessBoard& board, int depth) {
         //find the best move within a given position
         score = negamax(board, -50000, 50000, current_depth);
 
-        for (int count = 0; count < pv_length[0]; ++count) {
-            //print pv move
-            std::cout << pv_table[0][count].to_string() << " ";
+        if (stop_search) {
+            break;
         }
-        std::cout << std::endl;
+
+        last_completed_best_move = best_move;
+        print_pv_line(current_depth, score);
     }
 
-    std::cout << "best move: " << best_move.to_string() << std::endl;
+    best_move = last_completed_best_move;
+    if (!output_uci_info) {
+        std::cout << "best move: " << best_move.to_string() << std::endl;
+    }
 
     return score;
 }
@@ -354,7 +425,9 @@ Move find_best_move(ChessBoard& board, int depth) {
     search_position(board, depth);
 
     //for debugging/evaluation purposes
-    print_nodes();
+    if (!output_uci_info) {
+        print_nodes();
+    }
 
     return best_move;
 }
@@ -368,6 +441,7 @@ static void clear_vars() {
     ply = 0;
     nodes = 0;
     best_move = Move();
+    last_completed_best_move = Move();
     memset(killer_moves, 0, sizeof(killer_moves));
     memset(history_moves, 0, sizeof(history_moves));
     memset(pv_length, 0, sizeof(pv_length));
@@ -381,4 +455,24 @@ static void clear_vars() {
 //clear TT
 void clear_transposition_table() {
     tt.clear();
+}
+
+void set_search_time_limit(uint64_t stop_time) {
+    use_time_limit = true;
+    search_stop_time = stop_time;
+    stop_search = false;
+}
+
+void clear_search_time_limit() {
+    use_time_limit = false;
+    search_stop_time = 0;
+    stop_search = false;
+}
+
+void stop_search_now() {
+    stop_search = true;
+}
+
+void set_uci_info_output(bool enabled) {
+    output_uci_info = enabled;
 }

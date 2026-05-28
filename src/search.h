@@ -7,6 +7,7 @@
 #include "constants.h"
 #include "board.h"
 
+#include <cstdint>
 #include <iostream>
 
 //constants
@@ -33,5 +34,13 @@ void print_nodes();
 static void clear_vars();
 
 void clear_transposition_table();
+
+void set_search_time_limit(uint64_t stop_time);
+
+void clear_search_time_limit();
+
+void stop_search_now();
+
+void set_uci_info_output(bool enabled);
 
 #endif
