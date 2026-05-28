@@ -35,7 +35,7 @@ static void clear_vars();
 
 void clear_transposition_table();
 
-void set_search_time_limit(uint64_t stop_time);
+void set_search_time_limit(uint64_t soft_stop_time, uint64_t hard_stop_time);
 
 void clear_search_time_limit();
 

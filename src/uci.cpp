@@ -12,7 +12,7 @@
 namespace {
     constexpr int default_search_depth = 5;
     constexpr int max_timed_search_depth = 64;
-    constexpr int move_overhead_ms = 75;
+    constexpr int move_overhead_ms = 100;
 
     struct GoOptions {
         int depth = 0;
@@ -21,7 +21,13 @@ namespace {
         int btime = 0;
         int winc = 0;
         int binc = 0;
+        int movestogo = 0;
         bool infinite = false;
+    };
+
+    struct TimeBudget {
+        int soft_ms = 0;
+        int hard_ms = 0;
     };
 
     bool make_uci_move(ChessBoard& board, const std::string& move_string) {
@@ -110,6 +116,8 @@ namespace {
                 input >> options.winc;
             } else if (token == "binc") {
                 input >> options.binc;
+            } else if (token == "movestogo") {
+                input >> options.movestogo;
             } else if (token == "infinite") {
                 options.infinite = true;
             }
@@ -134,10 +142,13 @@ namespace {
         return default_search_depth;
     }
 
-    int allocate_time_ms(const ChessBoard& board, const GoOptions& options) {
+    TimeBudget allocate_time_budget(const ChessBoard& board, const GoOptions& options) {
         if (options.movetime > 0) {
             int time = options.movetime - move_overhead_ms;
-            return time > 1 ? time : 1;
+            if (time < 1) {
+                time = 1;
+            }
+            return {time, time};
         }
 
         int time_left = 0;
@@ -151,17 +162,43 @@ namespace {
         }
 
         if (time_left <= 0) {
-            return 0;
+            return {0, 0};
         }
 
-        int budget = (time_left / 30) + (increment / 2);
-        int max_budget = time_left / 4;
-        if (budget > max_budget) {
-            budget = max_budget;
+        int safe_time = time_left - move_overhead_ms;
+        if (safe_time < 1) {
+            return {1, 1};
         }
 
-        budget -= move_overhead_ms;
-        return budget > 1 ? budget : 1;
+        int moves_to_go = options.movestogo > 0 ? options.movestogo : 18;
+        int base = safe_time / moves_to_go;
+        int soft = base + (increment * 3 / 4);
+
+        int min_soft = increment > 0 ? increment / 2 : 0;
+        if (soft < min_soft) {
+            soft = min_soft;
+        }
+
+        int hard = soft * 3;
+        int hard_cap = safe_time / 3;
+        if (options.movestogo > 0) {
+            hard_cap = safe_time / moves_to_go * 2;
+        }
+
+        if (hard > hard_cap) {
+            hard = hard_cap;
+        }
+        if (hard < soft) {
+            hard = soft;
+        }
+        if (hard > safe_time) {
+            hard = safe_time;
+        }
+        if (soft > hard) {
+            soft = hard;
+        }
+
+        return {soft > 1 ? soft : 1, hard > 1 ? hard : 1};
     }
 
     bool has_time_control(const GoOptions& options) {
@@ -206,8 +243,9 @@ void uci_loop() {
                 std::cout << "bestmove 0000\n";
             } else {
                 if (has_time_control(options)) {
-                    int budget = allocate_time_ms(*board, options);
-                    set_search_time_limit(get_time_ms() + budget);
+                    TimeBudget budget = allocate_time_budget(*board, options);
+                    uint64_t now = get_time_ms();
+                    set_search_time_limit(now + budget.soft_ms, now + budget.hard_ms);
                 } else {
                     clear_search_time_limit();
                 }

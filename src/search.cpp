@@ -8,7 +8,8 @@ static Move best_move;
 static Move last_completed_best_move;
 static int nodes = 0;
 static bool use_time_limit = false;
-static uint64_t search_stop_time = 0;
+static uint64_t soft_stop_time = 0;
+static uint64_t hard_stop_time = 0;
 static bool stop_search = false;
 static bool output_uci_info = false;
 static uint64_t search_start_time = 0;
@@ -29,9 +30,13 @@ const int reduction_limit = 3;
 static TranspositionTable tt;
 
 static void check_time() {
-    if (use_time_limit && (nodes & 2047) == 0 && get_time_ms() >= search_stop_time) {
+    if (use_time_limit && (nodes & 2047) == 0 && get_time_ms() >= hard_stop_time) {
         stop_search = true;
     }
+}
+
+static bool soft_time_is_up() {
+    return use_time_limit && get_time_ms() >= soft_stop_time;
 }
 
 static void print_pv_line(int depth, int score) {
@@ -406,6 +411,10 @@ int search_position(ChessBoard& board, int depth) {
 
         last_completed_best_move = best_move;
         print_pv_line(current_depth, score);
+
+        if (soft_time_is_up()) {
+            break;
+        }
     }
 
     best_move = last_completed_best_move;
@@ -457,15 +466,17 @@ void clear_transposition_table() {
     tt.clear();
 }
 
-void set_search_time_limit(uint64_t stop_time) {
+void set_search_time_limit(uint64_t soft_time, uint64_t hard_time) {
     use_time_limit = true;
-    search_stop_time = stop_time;
+    soft_stop_time = soft_time;
+    hard_stop_time = hard_time;
     stop_search = false;
 }
 
 void clear_search_time_limit() {
     use_time_limit = false;
-    search_stop_time = 0;
+    soft_stop_time = 0;
+    hard_stop_time = 0;
     stop_search = false;
 }
 
